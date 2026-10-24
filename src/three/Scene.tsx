@@ -23,7 +23,8 @@ import { L as tr } from '../i18n'
 import { GonjiamExtras, HighwayProps, IncheonStatic, PortStatic, RailYardStatic, TownStatic } from './world/Network'
 import { RailYard } from './entities/Rail'
 import { FacilityLabels } from './fx/FacilityLabels'
-import { Overpass, TankFarm, TollPlazas } from './world/Outskirts'
+import { TankFarm, TollPlazas } from './world/Outskirts'
+import { GonjiamRailStatic, RailLineStatic } from './world/RailLine'
 import { Terrain } from './world/Terrain'
 import { Gates, GonjiamCY, Icheon, Incheon, Port, TownSignals } from './entities/Network'
 import { HubHall } from './entities/Hub'
@@ -299,7 +300,8 @@ export function World() {
       <Port />
       <RailYardStatic />
       <RailYard />
-      <Overpass />
+      <RailLineStatic />
+      <GonjiamRailStatic />
       <TankFarm />
       <TollPlazas />
       <Terrain />

@@ -1,29 +1,81 @@
-// 부산신항 철송장: 셔틀 열차 · RMG · 화차와 장치 줄의 컨테이너를 sim.rail에서 매 프레임 반영한다.
-// 컨테이너는 인스턴스 하나(색만 다름), 열차·RMG는 Merge로 묶어 그룹째 옮긴다.
+// 철송: 셔틀 열차(노선을 따라 칸마다 자세를 계산) · 부산·곤지암 철송장 RMG · 화차와 장치 줄의 컨테이너를 sim.rail에서 매 프레임 반영한다.
+// 컨테이너는 인스턴스 하나(색만 다름), 차량 한 칸과 RMG는 Merge로 묶어 그룹째 옮긴다.
 import { useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { sim } from '../../sim/sim'
-import { RAIL, wagonX } from '../../sim/rail'
+import { CARS, RAIL, TERMINALS, bayX, carPose, type RailTerminal, type TermId } from '../../sim/rail'
 import { Merge } from '../merge'
 import { unitBox } from '../kit'
 import { corrugatedMat } from '../sharedMats'
 import { FlatWagon, Locomotive, RmgFrame, RmgTrolley, Spreader } from '../models/rail'
 import { pickHandlers } from './Vehicles'
 
-const MAXBOX = RAIL.wagons + RAIL.wagons * 2 * 3 + 1
+const MAXBOX = RAIL.wagons + 2 * (RAIL.wagons * 2 * 4) + 2
 const H = 16
-const MID = (RAIL.rmgZ0 + RAIL.rmgZ1) / 2
-/** 지도 끝: 열차 앞이 이보다 동쪽이면 숨긴다 */
-const EDGE = 1150
 
-export function RailYard() {
-  const train = useRef<THREE.Group>(null)
+const term = (id: TermId): RailTerminal => (id === 'BS' ? sim.rail.bs : sim.rail.gj)
+
+/** 철송장 RMG 한 기: 다리는 rmgZ0 · rmgZ1 레일 위, 거더를 따라 트롤리(z), 그 아래 스프레더(y) */
+function RmgRig({ id }: { id: TermId }) {
+  const T = TERMINALS[id]
+  const mid = (T.rmgZ0 + T.rmgZ1) / 2
   const rmg = useRef<THREE.Group>(null)
   const trolley = useRef<THREE.Group>(null)
   const spreader = useRef<THREE.Group>(null)
   const cable = useRef<THREE.Mesh>(null)
+  const handlers = useMemo(() => pickHandlers({ kind: 'site', id }), [id])
+  const cableMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2E3442', roughness: 0.6 }), [])
+  useFrame(() => {
+    const R = term(id).rmg
+    if (rmg.current) rmg.current.position.x = R.x
+    if (trolley.current) trolley.current.position.z = R.tz - mid
+    if (spreader.current) spreader.current.position.set(0, R.hy, R.tz - mid)
+    if (cable.current) {
+      const top = H + 0.8
+      const bot = R.hy + 0.8
+      cable.current.scale.y = Math.max(0.1, top - bot)
+      cable.current.position.set(0, (top + bot) / 2, R.tz - mid)
+    }
+  })
+  return (
+    <group {...handlers}>
+      <group ref={rmg} position={[bayX(id, 0), 0, mid]}>
+        <Merge><RmgFrame span={T.rmgZ1 - T.rmgZ0} h={H} /></Merge>
+        <group ref={trolley}><Merge><RmgTrolley h={H} /></Merge></group>
+        <group ref={spreader}><Merge><Spreader /></Merge></group>
+        <mesh ref={cable} geometry={unitBox} scale={[0.12, 1, 1.6]} material={cableMat} />
+      </group>
+    </group>
+  )
+}
+
+/** 셔틀 열차: 앞 기관차 · 화차 9량 · 뒤 기관차(밀고 끄는 셔틀). 칸마다 노선 위 자세를 따로 잡는다 */
+function Train() {
+  const refs = useRef<(THREE.Group | null)[]>([])
   const handlers = useMemo(() => pickHandlers({ kind: 'site', id: 'BS' }), [])
+  useFrame(() => {
+    const s = sim.rail.s
+    CARS.forEach((c, i) => {
+      const g = refs.current[i]
+      if (!g) return
+      const p = carPose(s + c.u, c.len)
+      g.position.set(p.x, p.y, p.z)
+      g.rotation.set(0, p.yaw + (c.flip ? Math.PI : 0), c.flip ? -p.pitch : p.pitch, 'YZX')
+    })
+  })
+  return (
+    <group {...handlers}>
+      {CARS.map((c, i) => (
+        <group key={i} ref={(o) => { refs.current[i] = o }}>
+          <Merge>{c.kind === 'loco' ? <Locomotive /> : <FlatWagon />}</Merge>
+        </group>
+      ))}
+    </group>
+  )
+}
+
+export function RailYard() {
   const boxes = useMemo(() => {
     const m = new THREE.InstancedMesh(unitBox, corrugatedMat(), MAXBOX)
     m.castShadow = true
@@ -33,63 +85,51 @@ export function RailYard() {
     for (let i = 0; i < MAXBOX; i++) m.setColorAt(i, new THREE.Color('#ffffff'))
     return m
   }, [])
-  const cableMat = useMemo(() => new THREE.MeshStandardMaterial({ color: '#2E3442', roughness: 0.6 }), [])
   const o = useMemo(() => new THREE.Object3D(), [])
   const c = useMemo(() => new THREE.Color(), [])
   useFrame(() => {
     const R = sim.rail
-    if (train.current) {
-      train.current.position.x = R.x
-      train.current.visible = R.x < EDGE
-    }
-    if (rmg.current) rmg.current.position.x = R.rmg.x
-    if (trolley.current) trolley.current.position.z = R.rmg.tz - MID
-    if (spreader.current) spreader.current.position.set(0, R.rmg.hy, R.rmg.tz - MID)
-    if (cable.current) {
-      const top = H + 0.8
-      const bot = R.rmg.hy + 0.8
-      cable.current.scale.y = Math.max(0.1, top - bot)
-      cable.current.position.set(0, (top + bot) / 2, R.rmg.tz - MID)
-    }
     let n = 0
-    const put = (x: number, y: number, z: number, col: string) => {
-      o.position.set(x, y, z)
+    const commit = (col: string) => {
       o.scale.set(12.2, 2.6, 2.44)
       o.updateMatrix()
       boxes.setMatrixAt(n, o.matrix)
       boxes.setColorAt(n, c.set(col))
       n++
     }
-    if (R.x < EDGE) R.wagons.forEach((col, i) => { if (col) put(wagonX(R.x, i), RAIL.deck + 1.3, RAIL.z, col) })
-    R.stack.forEach((row, r) => row.forEach((pile, b) => pile.forEach((col, k) => {
-      if (n < MAXBOX - 1) put(wagonX(RAIL.stopX, b), k * 2.6 + 1.3, RAIL.stackZ[r], col)
-    })))
-    if (R.rmg.box) put(R.rmg.x, R.rmg.hy - 1.35, R.rmg.tz, R.rmg.box)
+    // 화차 위: 칸의 자세(기울기 포함)를 그대로 따른다
+    R.wagons.forEach((b, i) => {
+      if (!b || n >= MAXBOX) return
+      const car = CARS[i + 1]
+      const p = carPose(R.s + car.u, car.len)
+      o.position.set(p.x, p.y, p.z)
+      o.rotation.set(0, p.yaw, p.pitch, 'YZX')
+      o.translateY(RAIL.deck + 1.3)
+      commit(b.color)
+    })
+    o.rotation.set(0, 0, 0)
+    for (const id of ['BS', 'GJ'] as const) {
+      const T = term(id)
+      T.stack.forEach((row, r) => row.forEach((pile, bay) => pile.forEach((b, k) => {
+        if (n >= MAXBOX - 2) return
+        o.position.set(bayX(id, bay), k * 2.6 + 1.3, T.spec.stackZ[r])
+        commit(b.color)
+      })))
+      if (T.rmg.box && n < MAXBOX) {
+        o.position.set(T.rmg.x, T.rmg.hy - 1.35, T.rmg.tz)
+        commit(T.rmg.box.color)
+      }
+    }
     boxes.count = n
     boxes.instanceMatrix.needsUpdate = true
     if (boxes.instanceColor) boxes.instanceColor.needsUpdate = true
   })
-  const L = RAIL.locoLen
   return (
-    <group {...handlers}>
+    <group>
       <primitive object={boxes} />
-      {/* 열차: 앞(서쪽) 기관차 · 화차 9량 · 뒤 기관차(밀고 끄는 셔틀) */}
-      <group ref={train} position={[RAIL.stopX, 0, RAIL.z]}>
-        <Merge>
-          <group position={[L / 2, 0, 0]}><Locomotive /></group>
-          {Array.from({ length: RAIL.wagons }, (_, i) => (
-            <group key={i} position={[L + RAIL.wagonLen * (i + 0.5), 0, 0]}><FlatWagon /></group>
-          ))}
-          <group position={[L * 1.5 + RAIL.wagonLen * RAIL.wagons, 0, 0]} rotation={[0, Math.PI, 0]}><Locomotive /></group>
-        </Merge>
-      </group>
-      {/* RMG */}
-      <group ref={rmg} position={[wagonX(RAIL.stopX, 0), 0, MID]}>
-        <Merge><RmgFrame span={RAIL.rmgZ1 - RAIL.rmgZ0} h={H} /></Merge>
-        <group ref={trolley}><Merge><RmgTrolley h={H} /></Merge></group>
-        <group ref={spreader}><Merge><Spreader /></Merge></group>
-        <mesh ref={cable} geometry={unitBox} scale={[0.12, 1, 1.6]} material={cableMat} />
-      </group>
+      <Train />
+      <RmgRig id="BS" />
+      <RmgRig id="GJ" />
     </group>
   )
 }

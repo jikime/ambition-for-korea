@@ -22,7 +22,7 @@ import { DRIVE_LIMIT, DRIVE_TIRED, REST_AREAS, REST_MIN } from '../sim/rest'
 import { CAUSE_LABEL } from '../sim/promise'
 import { ROUTE_KM } from '../sim/carbon'
 import { VCAUSE_LABEL, type VesselCause } from '../sim/vessel'
-import { RAIL_PHASE_LABEL } from '../sim/rail'
+import { RAIL_STATE_LABEL, STOP, type TermId } from '../sim/rail'
 import { L, LL, plural } from '../i18n'
 
 function Header({ glyph, kicker, kickerColor, title, sub, sel, followable }: {
@@ -123,7 +123,7 @@ function SiteView({ id }: { id: SiteId }) {
     return (
       <>
         {head}
-        <StatusLine tone="green" label={L('정상 운영', 'Normal ops')} text={L(`도크 ${busy}/6 · ${arriving}대 진입 · CY ${sim.cy.count} TEU`, `Docks ${busy}/6 · ${arriving} entering · CY ${sim.cy.count} TEU`)} />
+        <StatusLine tone="green" label={L('정상 운영', 'Normal ops')} text={L(`도크 ${busy}/6 · ${arriving}대 진입 · CY ${sim.cy.count} TEU · 철송 ${sim.rail.gj.count(0)}개 하역 대기`, `Docks ${busy}/6 · ${arriving} entering · CY ${sim.cy.count} TEU · ${sim.rail.gj.count(0)} off rail`)} />
         <div className="mt-3 grid grid-cols-2 gap-2">
           <Stat label={L('보관 재고', 'Stock')} value={sim.stats.stock} total={1800} />
           <Stat label={L('도크 사용', 'Docks in use')} value={busy} total={6} tone="green" />
@@ -138,6 +138,7 @@ function SiteView({ id }: { id: SiteId }) {
           </span>
           <span className="text-faint">›</span>
         </button>
+        <RailShuttleCard here="GJ" />
         <SectionTitle right={L('수량', 'Qty')}>{L('주요 재고', 'Key stock')}</SectionTitle>
         <Inventory rows={[{ item: 'water', qty: 1906 }, { item: 'rice', qty: 297 }, { item: 'tissue', qty: 212, low: true }, { item: 'box', qty: 4448 }]} />
         <ForkliftLead site="GJ" />
@@ -502,6 +503,38 @@ function GateHistory({ v }: { v: Vehicle }) {
   )
 }
 
+/** 철송 셔틀(부산신항 ↔ 곤지암): 이 철송장 기준으로 지금 상태 · 도착 예정 · 진행 막대 */
+function RailShuttleCard({ here }: { here: TermId }) {
+  const R = sim.rail
+  const other: TermId = here === 'BS' ? 'GJ' : 'BS'
+  const name = (t: TermId) => (t === 'BS' ? L('부산', 'Busan') : L('곤지암', 'Gonjiam'))
+  const toHere = R.state === (here === 'BS' ? 'toBS' : 'toGJ')
+  const until = R.untilArrive
+  const span = Math.abs(STOP.GJ - STOP.BS)
+  const moved = R.state === 'toGJ' || R.state === 'toBS' ? 1 - Math.abs(STOP[R.state === 'toGJ' ? 'GJ' : 'BS'] - R.s) / span : 0
+  const T = R.at
+  const text = R.state === here && T
+    ? R.state === 'BS' && T.waited > 0
+      ? L(`장치장 반출 기다리는 중 · 상하차 ${T.work.done}/${T.work.total}`, `Waiting for yard release · Handling ${T.work.done}/${T.work.total}`)
+      : L(`상하차 ${T.work.done}/${T.work.total}`, `Handling ${T.work.done}/${T.work.total}`)
+    : toHere
+      ? L(`${name(here)} 도착 예정 ${until !== null ? hhmm(sim.clock + until * SPEEDUP) : '-'}`, `Due at ${name(here)} ${until !== null ? hhmm(sim.clock + until * SPEEDUP) : '-'}`)
+      : R.state === other
+        ? L(`${name(other)} 철송장에서 상하차 중`, `Handling at ${name(other)} rail terminal`)
+        : L(`${name(other)}행 운행 중`, `Running to ${name(other)}`)
+  return (
+    <>
+      <SectionTitle right={<span className="num">{RAIL_STATE_LABEL[R.state]}</span>}>{L('철송 셔틀 · 부산신항 ↔ 곤지암', 'Rail shuttle · Busan ↔ Gonjiam')}</SectionTitle>
+      <div className="flex justify-between text-[11px] text-muted">
+        <span>{text}</span>
+        <span className="num">{L(`오늘 ${R.stats.arrivals + 6}회`, `${R.stats.arrivals + 6} today`)}</span>
+      </div>
+      <Bar value={R.state === here ? R.progress : toHere ? moved : R.state === other ? 0 : 1 - moved} tone={R.state === here ? 'green' : 'blue'} className="mt-1" />
+      <div className="num mt-0.5 text-[10.5px] text-faint">{L(`곤지암행 ${R.stats.toGj}개 · 부산행 ${R.stats.toBs}개 · 화차 9량`, `${R.stats.toGj} to Gonjiam · ${R.stats.toBs} to Busan · 9 wagons`)}</div>
+    </>
+  )
+}
+
 /**
  * 부산신항 배후 시설(항만 관제 영상의 물류단지 패널): 철송장 셔틀 열차, 반출 수단 분담(도로·철도),
  * 트럭 대기장 · 세관 검사동 · 장치장 · 철송장 한 줄 상태. 줄을 누르면 카메라가 그곳으로.
@@ -512,24 +545,18 @@ function BsHinterland() {
   const X = G.xray
   const occ = Math.max(...sim.port.occupancy())
   const roadTeu = G.stats.BS.out * 2
-  const railTeu = R.stats.teuIn
+  const railTeu = R.stats.toGj * 2
   const share = roadTeu + railTeu ? railTeu / (roadTeu + railTeu) : 0
-  const until = R.untilNext
   const go = (x: number, z: number, d: number) => useStore.getState().goZone(x, z, d, 'BS')
   const rows: { name: string; text: string; warn?: boolean; at: [number, number, number] }[] = [
     { name: L('트럭 대기장', 'Truck lot'), text: L(`정문 대기 ${G.queue('BS').length}대 · 대기 트레일러 7대`, `${G.queue('BS').length} at gate · 7 trailers parked`), warn: G.queue('BS').length >= 2, at: [92, 96, 70] },
     { name: L('세관 검사동', 'Customs'), text: L(`X-ray 대기 ${X.pending.size + X.since.size}대 · 검사 ${X.done}대${X.done ? ` · 평균 ${Math.round(X.sum / X.done / 60)}분` : ''}`, `X-ray queue ${X.pending.size + X.since.size} · ${X.done} inspected${X.done ? ` · avg ${Math.round(X.sum / X.done / 60)} min` : ''}`), warn: X.pending.size + X.since.size >= 2, at: [318, 80, 60] },
     { name: L('장치장', 'Yard'), text: L(`블록 최고 ${Math.round(occ * 100)}%${occ >= 0.9 ? ' · 포화 주의' : ''}`, `Peak block ${Math.round(occ * 100)}%${occ >= 0.9 ? ' · near full' : ''}`), warn: occ >= 0.9, at: [258, 180, 150] },
-    { name: L('철송장', 'Rail terminal'), text: L(`${RAIL_PHASE_LABEL[R.phase]} · 장치 ${R.stack.flat().reduce((n, p) => n + p.length, 0)}개`, `${RAIL_PHASE_LABEL[R.phase]} · ${R.stack.flat().reduce((n, p) => n + p.length, 0)} stacked`), at: [485, 282, 120] },
+    { name: L('철송장', 'Rail terminal'), text: L(`${RAIL_STATE_LABEL[R.state]} · 실을 수입 ${R.bs.count(1)}개 · 내린 수출 ${R.bs.count(0)}개`, `${RAIL_STATE_LABEL[R.state]} · ${R.bs.count(1)} imports to load · ${R.bs.count(0)} exports unloaded`), at: [485, 282, 120] },
   ]
   return (
     <>
-      <SectionTitle right={<span className="num">{RAIL_PHASE_LABEL[R.phase]}</span>}>{L('철송 셔틀', 'Rail shuttle')}</SectionTitle>
-      <div className="flex justify-between text-[11px] text-muted">
-        <span>{R.phase === 'working' ? L(`상하차 ${R.work.done}/${R.work.total}`, `Handling ${R.work.done}/${R.work.total}`) : R.phase === 'away' || R.phase === 'arriving' ? L(`다음 열차 ${until !== null ? hhmm(sim.clock + until * SPEEDUP) : '-'} 도착 예정`, `Next train due ${until !== null ? hhmm(sim.clock + until * SPEEDUP) : '-'}`) : L('출발 · 내륙 기지 방면', 'Departed · to inland depot')}</span>
-        <span className="num">{L(`오늘 ${R.stats.trains + 6}회`, `${R.stats.trains + 6} today`)}</span>
-      </div>
-      <Bar value={R.progress} tone={R.phase === 'working' ? 'green' : 'blue'} className="mt-1" />
+      <RailShuttleCard here="BS" />
       <div className="mt-2 text-[11px] text-muted">{L('반출 수단(화면을 연 뒤, TEU)', 'Outbound mode (since opening, TEU)')}</div>
       <div className="mt-1 flex h-2 overflow-hidden rounded-full bg-line-2">
         <div className="h-full bg-brand" style={{ width: `${(1 - share) * 100}%` }} />
@@ -1279,7 +1306,7 @@ function JourneyView({ mode }: { mode: 'sea' | 'air' }) {
 function NetworkView() {
   const inTransit = (kind: Vehicle['kind']) => sim.vehicles.filter((v) => v.kind === kind && v.visible && (v.phase === 'highway' || v.phase === 'delivering' || v.phase === 'returning')).length
   const air = sim.vehicles.filter((v) => v.home === 'AP' && v.visible && (v.phase === 'highway' || v.phase === 'departing' || v.phase === 'enroute')).length
-  const counts: Record<string, number> = { icgj: inTransit('wing'), gjin: inTransit('box') - air, intw: inTransit('van'), bsgj: inTransit('trailer'), gjap: air }
+  const counts: Record<string, number> = { icgj: inTransit('wing'), gjin: inTransit('box') - air, intw: inTransit('van'), bsgj: inTransit('trailer'), gjap: air, rail: sim.rail.state === 'toGJ' || sim.rail.state === 'toBS' ? 1 : 0 }
   const flowLink: Record<string, keyof typeof sim.linkFactor> = { icgj: 'hw_ic_gj', gjin: 'hw_gj_in', intw: 'town_gate', bsgj: 'hw_gj_bs' }
   const live = sim.incidents.filter((i) => i.state === 'active' || i.state === 'confirm')
   return (

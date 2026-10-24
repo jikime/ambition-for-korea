@@ -1,6 +1,7 @@
 // 배·비행기로 가는 여정. 육로 택배 여정(Sim.story)과 같은 방식으로 단계·시각을 기록하고,
 // 실제 시뮬레이션 안의 컨테이너·트럭·ULD·화물기를 그대로 따라간다(새로 꾸며 낸 움직임이 없다).
 //  - 해상(수입): 컨테이너선 → 안벽 크레인 → 적하목록 심사 → AGV·장치장 → 트레일러 → 간선 → 곤지암 CY 적출
+//    한 번씩 번갈아 철송으로: 장치장 → 부산 철송장 → 셔틀 열차(중부 철송선) → 곤지암 철송장 → CY 적출
 //  - 항공(수출): 곤지암 항공 도크 → 간선 → 화물터미널 → 위험물 사전 검사 → ULD → 화물기 탑재 → 푸시백 → 이륙
 import type { Sim, Vehicle } from './sim'
 import type { SiteId } from './world'
@@ -40,6 +41,16 @@ export const SEA_STEPS: JourneyStep[] = [
   { label: L('CY 하역 · 적출', 'CY unloading · Devanning'), sub: L('곤지암 허브', 'Gonjiam Hub'), desc: L('곤지암 CY에서 컨테이너를 내리고 문을 열어 상자를 꺼냅니다(적출). 꺼낸 상자는 허브 분류동에 투입되어, 육로 택배 여정처럼 서브터미널과 1톤 배송차를 거쳐 고객 문 앞에 도착합니다.', 'At the Gonjiam CY the container is unloaded and opened, and the boxes are taken out (devanning). They go into the hub sorting building and, like the road parcel journey, pass through the sub-terminal and a 1-ton delivery van to the customer\'s doorstep.') },
 ]
 
+/** 철송으로 가는 해상 수입 여정: 장치까지는 같고, 그 뒤 철송장 · 열차 · 곤지암 철송장 */
+export const SEA_RAIL_STEPS: JourneyStep[] = [
+  ...SEA_STEPS.slice(0, 4),
+  { label: L('장치 · 철송 대기', 'Stacked · Awaiting rail'), sub: L('수입 신고 수리', 'Import declaration accepted'), desc: L('세관 수입 신고가 수리되면 반출할 수 있습니다. 이 컨테이너는 트레일러 대신 철도로 보내기로 해, 부산신항 철송장이 반출을 요청할 때까지 블록에서 기다립니다.', 'Once customs accepts the import declaration, the container can leave. This one goes by rail instead of a trailer, so it waits in the block until the Busan New Port rail terminal asks for it.') },
+  { label: L('철송장 반입', 'Into rail terminal'), sub: L('육측 ARMG → 구내 트랙터', 'Land-side ARMG → Yard tractor'), desc: L('육측 야드 크레인이 블록에서 컨테이너를 꺼내 구내 트랙터에 싣고, 부산신항 철송장의 열차 대기 줄로 옮깁니다. 세관 X-ray 대상이면 이때 검색을 거칩니다.', 'The land-side yard crane takes the container out of the block onto a yard tractor, which moves it to the train queue at the Busan New Port rail terminal. Containers flagged for customs X-ray are screened on the way.') },
+  { label: L('화차 상차', 'Wagon loading'), sub: L('RMG · 부산 철송장', 'RMG · Busan rail terminal'), desc: L('레일 위 갠트리 크레인(RMG)이 먼저 곤지암에서 온 수출 컨테이너를 내리고, 대기 줄의 수입 컨테이너를 평판 화차에 싣습니다. 9량을 다 채우면 출발합니다.', 'The rail-mounted gantry crane (RMG) first unloads export containers from Gonjiam, then loads import containers from the queue onto flat wagons. The train leaves once all 9 wagons are loaded.') },
+  { label: L('철도 운송', 'Rail transport'), sub: L('부산신항 → 곤지암 · 중부 철송선', 'Busan New Port → Gonjiam · Central rail line'), desc: L('앞뒤에 기관차가 붙은 컨테이너 셔틀 열차가 중부 철송선을 달려 간선 위 철도교를 넘고 곤지암 철송장까지 갑니다. 컨테이너 한 개를 트레일러로 보낼 때보다 배출이 훨씬 적습니다.', 'The container shuttle train, with a locomotive at each end, runs along the central rail line, crosses the rail bridge over the highway and reaches the Gonjiam rail terminal. It emits far less per container than a trailer.') },
+  { label: L('하차 · CY 적출', 'Unloading · Devanning'), sub: L('곤지암 철송장 → CY', 'Gonjiam rail terminal → CY'), desc: L('곤지암 철송장 RMG가 컨테이너를 내리면 구내 트랙터가 CY로 옮겨 문을 열고 상자를 꺼냅니다(적출). 꺼낸 상자는 허브 분류동에 투입되어 고객 문 앞까지 갑니다.', 'The Gonjiam rail terminal RMG unloads the container, a yard tractor takes it to the CY, and it is opened and emptied (devanning). The boxes go into hub sorting and on to the customer’s door.') },
+]
+
 export const AIR_STEPS: JourneyStep[] = [
   { label: L('항공 출고 상차', 'Air outbound loading'), sub: L('곤지암 항공 우선 도크', 'Gonjiam air priority dock'), desc: L('해외 고객이 주문한 상자를 곤지암 메가허브 항공 우선 출고 도크에서 항공 화물 트럭(다온항공 카고)에 싣습니다.', 'Boxes ordered by overseas customers are loaded onto an air cargo truck (Daon Air Cargo) at the air priority outbound dock of Gonjiam Mega Hub.') },
   { label: L('간선 운송', 'Linehaul'), sub: L('곤지암 → 인천공항', 'Gonjiam → Incheon Airport'), desc: L('트럭이 고속도로 간선으로 인천공항 화물터미널 육측 도크까지 갑니다.', 'The truck takes the highway linehaul to the land-side dock of the Incheon Airport Cargo Terminal.') },
@@ -70,6 +81,8 @@ export class SeaJourney {
   truck: string | null = null
   /** 적하목록 판정(장치 블록 결정) */
   decision = ''
+  /** 장치장에서 곤지암까지: 트레일러(도로) 또는 철송(철도). 여정마다 번갈아 정한다 */
+  via: 'road' | 'rail' = 'road'
   /** 끝난 뒤 다음 여정까지, 또는 한 단계에 머문 시간 */
   timer = 0
   private stay = 0
@@ -78,7 +91,7 @@ export class SeaJourney {
   constructor(private sim: Sim) {}
 
   get steps() {
-    return SEA_STEPS
+    return this.via === 'rail' ? SEA_RAIL_STEPS : SEA_STEPS
   }
 
   start() {
@@ -94,8 +107,12 @@ export class SeaJourney {
     this.no = box.id
     this.box = box
     p.focus = box
+    // 홀수 번째 여정은 철송, 짝수 번째는 트레일러
+    this.via = this.n % 2 === 1 ? 'rail' : 'road'
+    p.focusVia = this.via
+    this.sim.rail.focus = null
     this.stage = 0
-    this.times = [this.sim.clock, 0, 0, 0, 0, 0, 0, 0]
+    this.times = [this.sim.clock, ...this.steps.slice(1).map(() => 0)]
     this.status = 'running'
     this.truck = null
     this.decision = ''
@@ -122,12 +139,15 @@ export class SeaJourney {
       return
     }
     this.stay += dt
-    if (this.stay > STUCK) {
+    // 철송은 열차를 기다리는 동안(왕복 12분 안팎) 한 단계에 오래 머문다
+    if (this.stay > (this.via === 'rail' ? STUCK * 1.7 : STUCK)) {
       this.start()
       return
     }
     const p = this.sim.port
     const b = this.box
+    // 철송 여정이면 철송장이 이 컨테이너를 먼저 반출 요청하고 먼저 싣는다
+    if (this.via === 'rail') this.sim.rail.focus = b
     // 같은 컨테이너가 배로 되돌아가 다시 내려지기도 하므로, 심사가 끝난 뒤의 최신 기록만 본다
     if (this.stage >= 3 && !this.decision) this.decision = p.log.find((l) => l.id === b.id)?.decision ?? ''
     const truck = this.sim.vehicles.find((v) => v.box === b)
@@ -139,6 +159,25 @@ export class SeaJourney {
     const arm = p.armgs.find((a) => a.box === b)
     if (arm) return this.to(arm.side === 'sea' ? 3 : 5)
     if (p.blocks.some((blk) => blk.some((bay) => bay.includes(b)))) return this.to(4)
+    if (this.via === 'rail') {
+      const R = this.sim.rail
+      const loc = R.locate(b)
+      if (loc) {
+        if (loc.where === 'bsStack') return this.to(5)
+        if (loc.where === 'bsRmg') return this.to(6)
+        if (loc.where === 'wagon') return this.to(R.state === 'BS' ? 6 : R.state === 'toGJ' ? 7 : 8)
+        return this.to(8)
+      }
+      // 철송 어디에도 없으면: 곤지암 CY로 넘겨 적출을 마쳤다
+      if (this.stage >= 7) {
+        this.to(8)
+        this.status = 'done'
+        this.timer = 14
+        R.focus = null
+        if (p.focus === b) p.focus = null
+      } else this.start()
+      return
+    }
     if ([...p.trailers.values()].some((t) => t.box === b)) return this.to(5)
     if (truck) {
       if (truck.site === 'GJ' && (truck.phase === 'unloading' || truck.phase === 'inbound')) return this.to(7)
@@ -172,7 +211,21 @@ export class SeaJourney {
     for (let bi = 0; bi < p.blocks.length; bi++) {
       for (let bay = 0; bay < p.blocks[bi].length; bay++) {
         const k = p.blocks[bi][bay].indexOf(b)
-        if (k >= 0) return set(PORT.blocks[bi] + PORT.blockRows[k % PORT.blockRows.length], Math.floor(k / PORT.blockRows.length) * 2.6 + 1.3, PORT.blockBays[bay], L(`${'ABCD'[bi]} 블록 장치 · 트레일러 배차 대기`, `Stacked in block ${'ABCD'[bi]} · awaiting trailer`))
+        if (k >= 0) return set(PORT.blocks[bi] + PORT.blockRows[k % PORT.blockRows.length], Math.floor(k / PORT.blockRows.length) * 2.6 + 1.3, PORT.blockBays[bay], (this.via === 'rail' ? L(`${'ABCD'[bi]} 블록 장치 · 철송장 반출 대기`, `Stacked in block ${'ABCD'[bi]} · awaiting rail terminal transfer`) : L(`${'ABCD'[bi]} 블록 장치 · 트레일러 배차 대기`, `Stacked in block ${'ABCD'[bi]} · awaiting trailer`)))
+      }
+    }
+    if (this.via === 'rail') {
+      const R = this.sim.rail
+      const loc = R.locate(b)
+      if (loc) {
+        const n = (loc.wagon ?? 0) + 1
+        const label = loc.where === 'bsStack' ? L('부산 철송장 · 열차 대기 줄', 'Busan rail terminal · train queue')
+          : loc.where === 'bsRmg' ? L('부산 철송장 RMG · 화차 상차 중', 'Busan rail terminal RMG · loading onto a wagon')
+            : loc.where === 'wagon' ? (R.state === 'BS' ? L(`${n}번 화차 · 출발 대기`, `Wagon ${n} · awaiting departure`) : R.state === 'toGJ' ? L(`${n}번 화차 · 중부 철송선 운행 중`, `Wagon ${n} · on the central rail line`) : L(`${n}번 화차 · 곤지암 철송장 도착`, `Wagon ${n} · arrived at Gonjiam`))
+              : loc.where === 'gjRmg' ? L('곤지암 철송장 RMG · 하차 중', 'Gonjiam rail terminal RMG · unloading')
+                : L('곤지암 철송장 · CY 이송 대기', 'Gonjiam rail terminal · awaiting CY transfer')
+        const gj = loc.where === 'gjRmg' || loc.where === 'gjStack' || (loc.where === 'wagon' && (R.state === 'GJ' || loc.z < 0))
+        return set(loc.x, loc.y, loc.z, label, gj ? 'GJ' : 'BS')
       }
     }
     const v = this.sim.vehicles.find((x) => x.box === b) ?? (this.truck ? this.sim.vehicle(this.truck) : undefined)

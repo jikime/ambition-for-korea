@@ -1,8 +1,8 @@
 // 재생 막대(되감기, 항만 관제 영상 분석 2순위)의 기록. 관제 시계 60분 동안 0.25초(시뮬레이션)마다
-// 차량·일반 차량·사람·지게차·항만 AGV·화물기·선석 배·KPI 숫자를 링버퍼에 남긴다(약 5MB).
+// 차량·일반 차량·사람·지게차·항만 AGV·화물기·선석 배·철송 열차 위치·KPI 숫자를 링버퍼에 남긴다(약 5MB).
 // 재생할 때는 시뮬레이션을 멈추고 기록한 자세를 객체에 그대로 써 넣는다. 그래서 3D 렌더러와 패널은 고치지 않아도
 // 그 시각 장면을 보여 준다. LIVE로 돌아오면 멈출 때 저장한 지금 상태(64비트)로 정확히 되돌리고 시뮬레이션을 이어 간다.
-// 기록하지 않는 것(크레인 트롤리·컨베이어 상자·랙 장비·갑판 컨테이너)은 멈춘 시점 그대로 보인다.
+// 기록하지 않는 것(크레인 트롤리·컨베이어 상자·랙 장비·갑판 컨테이너·화차에 실린 컨테이너)은 멈춘 시점 그대로 보인다.
 import type { Sim, VPhase } from './sim'
 import { SPEEDUP } from './clock'
 import type { BerthPhase } from './port'
@@ -36,6 +36,8 @@ interface Frame {
   p: Arr
   /** 선석 배: 물러난 거리, 배 번호, 단계 */
   b: Arr
+  /** 철송 열차: 노선 위 거리, 속도 */
+  r: Arr
   s: Arr
 }
 
@@ -80,7 +82,7 @@ export class History {
       t: 0,
       v: mk(S.vehicles.length * VF), m: mk(S.life.movers.length * MF), f: mk(S.forklifts.length * FF),
       c: mk(S.traffic.cars.length * CF), a: mk(S.port.agvs.length * AF), p: mk(S.airport.aircraft.length * PF),
-      b: mk(3), s: mk(this.statKeys.length),
+      b: mk(3), r: mk(2), s: mk(this.statKeys.length),
     }
   }
 
@@ -121,6 +123,7 @@ export class History {
     })
     const B = S.port.berth
     F.b[0] = B.offset; F.b[1] = B.vessel; F.b[2] = BERTH.indexOf(B.phase)
+    F.r[0] = S.rail.s; F.r[1] = S.rail.v
     const st = S.stats as unknown as Record<string, number>
     this.statKeys.forEach((k, i) => { F.s[i] = st[k] })
   }
@@ -215,6 +218,8 @@ export class History {
     Bt.offset = lerp(A.b[0], B.b[0], k)
     Bt.vessel = near.b[1]
     Bt.phase = BERTH[near.b[2]] ?? Bt.phase
+    S.rail.s = lerp(A.r[0], B.r[0], k)
+    S.rail.v = near.r[1]
     const st = S.stats as unknown as Record<string, number>
     this.statKeys.forEach((key, i) => { st[key] = Math.round(lerp(A.s[i], B.s[i], k) * 10) / 10 })
     S.port.version++

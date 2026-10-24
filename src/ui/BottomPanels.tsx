@@ -1,4 +1,4 @@
-import { Boxes, CalendarRange, Check, DoorOpen, ChevronRight, ClipboardCheck, Construction, Container, Crosshair, Factory, Home, Layers, Package, PackageCheck, PackageOpen, Plane, PlaneTakeoff, Route, ScanSearch, Ship, ShieldCheck, Truck, Undo2, Warehouse } from 'lucide-react'
+import { Boxes, CalendarRange, Check, DoorOpen, ChevronRight, ClipboardCheck, Construction, Container, Crosshair, Factory, Home, Layers, Package, PackageCheck, PackageOpen, Plane, PlaneTakeoff, Route, ScanSearch, Ship, ShieldCheck, Truck, Undo2, Warehouse, TrainFront } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { sim, type Vehicle } from '../sim/sim'
 import { CARRIERS, ITEMS } from '../sim/data'
@@ -25,6 +25,10 @@ const STORY_ICONS: ReactNode[] = [
 const SEA_ICONS: ReactNode[] = [
   <Ship size={13} />, <Construction size={13} />, <ScanSearch size={13} />, <Container size={13} />,
   <Layers size={13} />, <Truck size={13} />, <Route size={13} />, <PackageOpen size={13} />,
+]
+const SEA_RAIL_ICONS: ReactNode[] = [
+  <Ship size={13} />, <Construction size={13} />, <ScanSearch size={13} />, <Container size={13} />,
+  <Layers size={13} />, <Truck size={13} />, <Construction size={13} />, <TrainFront size={13} />, <PackageOpen size={13} />,
 ]
 const AIR_ICONS: ReactNode[] = [
   <Warehouse size={13} />, <Truck size={13} />, <PackageCheck size={13} />, <ShieldCheck size={13} />,
@@ -198,9 +202,9 @@ function JourneyTracker({ mode }: { mode: 'sea' | 'air' }) {
             {sea ? L('배로 오는 해외 직구 컨테이너', 'Import container by sea') : L('비행기로 가는 역직구 상자', 'Export parcel by air')}
             <span className="rounded-md bg-line-2 px-1.5 py-0.5 text-[10.5px] font-semibold text-muted">#{j.n}</span>
           </span>
-          <span className="truncate text-muted">{sea ? L('상하이 → 부산신항 → 곤지암', 'Shanghai → Busan New Port → Gonjiam') : L(`곤지암 → 인천공항 → ${sim.air.dest || '해외'}`, `Gonjiam → Incheon Airport → ${sim.air.dest || 'Overseas'}`)}</span>
+          <span className="truncate text-muted">{sea ? (sim.sea.via === 'rail' ? L('상하이 → 부산신항 → 철송 → 곤지암', 'Shanghai → Busan New Port → Rail → Gonjiam') : L('상하이 → 부산신항 → 곤지암', 'Shanghai → Busan New Port → Gonjiam')) : L(`곤지암 → 인천공항 → ${sim.air.dest || '해외'}`, `Gonjiam → Incheon Airport → ${sim.air.dest || 'Overseas'}`)}</span>
         </div>
-        <Stepper steps={steps} icons={sea ? SEA_ICONS : AIR_ICONS} />
+        <Stepper steps={steps} icons={sea ? (sim.sea.via === 'rail' ? SEA_RAIL_ICONS : SEA_ICONS) : AIR_ICONS} />
         <p className="mt-2 line-clamp-2 rounded-lg bg-line-2 px-2 py-1.5 text-[11px] leading-snug text-ink-2" title={cur.desc}>
           <span className="font-semibold text-ink">{held ? L('탑재 보류 · ', 'Loading held · ') : j.status === 'done' ? L('완료 · ', 'Done · ') : L('지금 · ', 'Now · ')}{cur.label}</span> {held ? L('신고하지 않은 위험물이 의심되어 항공 탑재를 보류하고 해상 운송으로 돌렸습니다.', 'Suspected undeclared dangerous goods: air loading was held and the shipment moved to sea freight.') : cur.desc}
         </p>
@@ -211,7 +215,7 @@ function JourneyTracker({ mode }: { mode: 'sea' | 'air' }) {
           {sea ? (
             <>
               <div className="truncate text-[11px] text-muted" title={m?.description}>{m ? `${m.declared} · ${m.shipper}` : L('적하목록 확인 중', 'Checking manifest')}</div>
-              <div className="mt-0.5 truncate text-[11px] text-muted">{sim.sea.truck ? L(`트레일러 ${sim.sea.truck}`, `Trailer ${sim.sea.truck}`) : L('40ft 수입 컨테이너', '40ft import container')}</div>
+              <div className="mt-0.5 truncate text-[11px] text-muted">{sim.sea.via === 'rail' ? L('40ft 수입 컨테이너 · 철송(셔틀 열차)', '40ft import container · by rail (shuttle train)') : sim.sea.truck ? L(`트레일러 ${sim.sea.truck}`, `Trailer ${sim.sea.truck}`) : L('40ft 수입 컨테이너', '40ft import container')}</div>
             </>
           ) : (
             <>

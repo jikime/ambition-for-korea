@@ -1,6 +1,6 @@
 // 홍보 영상 연출(페이지 안에서 실행). 장면마다 카메라·환경·화면 UI·자막을 시간(t, 초)의 함수로 정한다.
 // record.mjs가 장면 준비(setup) 후 프레임마다 frame(i, f)를 부르고 화면을 찍는다.
-// 시간은 clock.js의 가상 시계로만 흐르므로, 같은 연출이면 결과도 늘 같다(Jev 응답 시점만 예외).
+// 시간은 clock.js의 가상 시계로만 흐르므로, 같은 연출이면 결과도 늘 같다(AI 응답 시점만 예외).
 (() => {
   const S = window.__sim
   const ST = window.__store
@@ -480,7 +480,7 @@
     ])
   })
 
-  // 11. AI(Jev): 교통 정보 한 줄 → 막힌 구간 판독 → 경로 반영
+  // 11. AI(Claude): 교통 정보 한 줄 → 막힌 구간 판독 → 경로 반영
   scene('ai', 22, () => {
     env('autumn', 'day', 'clear')
     speed(2)
@@ -494,9 +494,9 @@
     orbit(t / 22, [250, 0, 0], 760, 640, 0.15, 0.35, 0.8, 0.76)
     const at = (a) => once(t, a)
     const q = (s) => document.querySelector(s)
-    if (at(0.8)) q('button[aria-label="Jev 설정"]')?.click()
+    if (at(0.8)) q('button[aria-label="AI 설정"]')?.click()
     if (at(2.0)) q('button[role="switch"]')?.getAttribute('aria-checked') === 'false' && q('button[role="switch"]').click()
-    if (at(4.2)) q('button[aria-label="Jev 설정"]')?.click()
+    if (at(4.2)) q('button[aria-label="AI 설정"]')?.click()
     if (at(5.0)) q('button[aria-label="현장 보고·돌발 상황"]')?.click()
     if (at(5.6)) [...document.querySelectorAll('button')].find((b) => b.textContent?.startsWith('돌발 상황'))?.click()
     const text = '영동고속도로 이천IC 부근 화물차 추돌, 2개 차로 통제 중'
@@ -510,9 +510,9 @@
     }
     if (at(9.8)) q('input[aria-label="돌발 상황 입력"]')?.form?.requestSubmit()
     pill(t, [
-      [0.6, 5.0, '<i>AI</i>상단 스위치로 <b>Jev</b>를 켭니다'],
+      [0.6, 5.0, '<i>AI</i>상단 스위치로 <b>AI</b>를 켭니다'],
       [5.4, 10.4, '교통 정보 한 줄을 입력하면'],
-      [10.8, 21.6, 'Jev가 <b>막힌 구간과 영향</b>을 읽고 → 코드가 <b>속도·도착 시간</b>을 다시 계산합니다'],
+      [10.8, 21.6, 'AI가 <b>막힌 구간과 영향</b>을 읽고 → 코드가 <b>속도·도착 시간</b>을 다시 계산합니다'],
     ])
   })
 
@@ -529,7 +529,7 @@
     cap.shade = 0.2 + 0.6 * win(t, 3.5, 14, 1.2, 0.01)
     hook(t, [[0.6, 3.6, '택배 한 상자가 문 앞에 닿기까지']])
     const o = win(t, 4, 14, 1.0, 0.01)
-    if (o > 0) cap.title = { o, sub: '물류의 모든 순간을, 한 화면에', tags: '3D 실시간 물류 시뮬레이션 · AI 판독 Jev · React Three Fiber' }
+    if (o > 0) cap.title = { o, sub: '물류의 모든 순간을, 한 화면에', tags: '3D 실시간 물류 시뮬레이션 · AI 판독 Claude · React Three Fiber' }
     cap.black = smooth((t - 12.6) / 1.4)
   })
 

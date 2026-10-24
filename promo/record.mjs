@@ -22,13 +22,13 @@ await page.cdp('Emulation.setDeviceMetricsOverride', { width: 1920, height: 1080
 await page.cdp('Page.addScriptToEvaluateOnNewDocument', { source: clock })
 await page.goto(cfg.url ?? 'http://localhost:5188/')
 await page.waitForFunction(() => !!window.__sim, undefined, { timeout: 40000 })
-// Jev는 끈 상태에서 시작(영상 중간에 스위치로 켠다)
+// 한국어 화면, AI는 끈 상태에서 시작(영상 중간에 스위치로 켠다). 둘 다 이 탭에만 저장된다
 await page.evaluate(() => {
-  localStorage.setItem('hubtrace.ai.on', '0')
-  localStorage.removeItem('hubtrace.ai.key')
+  sessionStorage.setItem('hubtrace.lang', 'ko')
+  sessionStorage.setItem('hubtrace.ai.on', '0')
 })
 await page.reload()
-await page.waitForFunction(() => !!window.__sim && !!window.__controls && !!window.__promo && !!document.querySelector('button[aria-label="Jev 설정"]'), undefined, { timeout: 40000 })
+await page.waitForFunction(() => !!window.__sim && !!window.__controls && !!window.__promo && !!document.querySelector('button[aria-label="AI 설정"]'), undefined, { timeout: 40000 })
 await page.waitForTimeout(4000)
 await page.evaluate(director)
 // 자막 글자(Pretendard 부분 글꼴)를 미리 불러 둔다

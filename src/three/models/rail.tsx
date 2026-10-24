@@ -37,6 +37,25 @@ export function RailTrack({ x0, x1, z }: { x0: number; x1: number; z: number }) 
   )
 }
 
+/** 아무 방향 선로 한 토막(a → b, 높이 포함): 곡선·경사 구간을 짧은 토막으로 잇는다 */
+export function RailTrackSeg({ a, b }: { a: [number, number, number]; b: [number, number, number] }) {
+  const dx = b[0] - a[0]
+  const dy = b[1] - a[1]
+  const dz = b[2] - a[2]
+  const flat = Math.hypot(dx, dz)
+  const L = Math.hypot(flat, dy)
+  const geo = useMemo(() => planeUV([0, 0, L / SLEEPER, 1]), [L])
+  const m = useMemo(() => new THREE.MeshStandardMaterial({ map: repeatTex(sleeperTex()), roughness: 0.95 }), [])
+  return (
+    <group position={[(a[0] + b[0]) / 2, (a[1] + b[1]) / 2, (a[2] + b[2]) / 2]} rotation={[0, Math.atan2(-dz, dx), Math.atan2(dy, flat), 'YZX']}>
+      <mesh geometry={geo} material={m} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0.03, 0]} scale={[L + 0.05, 3.2, 1]} receiveShadow />
+      {[-0.72, 0.72].map((o) => (
+        <B key={o} s={[L + 0.05, 0.16, 0.08]} p={[0, 0.12, o]} m={steel()} cast={false} />
+      ))}
+    </group>
+  )
+}
+
 function Wheelset({ x }: { x: number }) {
   return (
     <group position={[x, 0.45, 0]}>

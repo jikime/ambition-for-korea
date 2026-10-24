@@ -24,5 +24,6 @@ const r = sim.zones.result()
 const t = sim.zones.trips
 console.log(`경로: 노선 합계 ${Math.round(r.base)} → ${Math.round(r.total)} m(${Math.round((1 - r.total / r.base) * 100)}% 짧음) · 실측 한 바퀴 평균 ${t.length ? Math.round(t.reduce((s, x) => s + x.dist, 0) / t.length) : '-'} m(${t.length}회, 최적 노선 ${sim.zones.applied ? '적용' : '미적용'})`)
 const co = sim.carbon
-console.log(`탄소: 육로 ${(co.totals.road / 1000).toFixed(1)} t · 해상 ${(co.totals.sea / 1000).toFixed(1)} t · 항공 ${(co.totals.air / 1000).toFixed(1)} t`)
+console.log(`탄소: 육로 ${(co.totals.road / 1000).toFixed(1)} t · 해상 ${(co.totals.sea / 1000).toFixed(1)} t · 철도 ${(co.totals.rail / 1000).toFixed(1)} t · 항공 ${(co.totals.air / 1000).toFixed(1)} t`)
+console.log(`철송: 도착 ${sim.rail.stats.arrivals}회 · 곤지암행 ${sim.rail.stats.toGj}개 · 부산행 ${sim.rail.stats.toBs}개 · 지금 ${sim.rail.state}`)
 console.log(`대전 중부허브: 도크 하역 ${sim.djDocks.reduce((s, d) => s + d.today, 0)}회(시작값 포함) · 휴게소 ${sim.restStats.stops}회 · 기사 교대 ${sim.restStats.swaps}회`)

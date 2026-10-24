@@ -1,111 +1,14 @@
-// 지도 동쪽 외곽(x 870 너머, 빈 땅 채우기 격자 밖): 간선을 넘는 고가도로(위로 일반 차가 오감)와 해안 탱크팜.
-// 항만 관제 영상 분석 3순위(고가 구간 · 탱크팜·배관 랙·줄무늬 굴뚝). 모두 가상 시설이다.
-import { useMemo, useRef } from 'react'
-import { useFrame } from '@react-three/fiber'
+// 지도 동쪽 외곽(x 870 너머, 빈 땅 채우기 격자 밖): 해안 탱크팜과 간선 양 끝 톨게이트.
+// 옛 고가도로 자리(x 1000)는 다온 중부 철송선 철도교가 쓴다(world/RailLine.tsx). 모두 가상 시설이다.
 import * as THREE from 'three'
 import { B, Cyl, Flat, cylGeo, mat } from '../kit'
 import { Merge } from '../merge'
-import { CarModel } from '../models/vehicles'
 import { SmallOffice } from '../models/sites'
 import { GroundPaints } from '../models/structures'
 import { paintTex } from '../textures'
 import { AtlasSign, signId } from '../townAtlas'
 import * as L from '../../sim/layout'
 import { L as tr } from '../../i18n'
-
-/** 고가도로: 남북으로 간선(z 41~55)을 넘는다. 북쪽 경사로 → 높이 8m 평평한 구간 → 남쪽 경사로 */
-export const OVERPASS = { x: 1000, w: 12, h: 8, n0: -330, n1: -150, s0: 140, s1: 210 }
-
-/** 고가도로 위 경로의 높이(z → y) */
-function deckY(z: number) {
-  const O = OVERPASS
-  if (z <= O.n0 || z >= O.s1) return 0
-  if (z < O.n1) return ((z - O.n0) / (O.n1 - O.n0)) * O.h
-  if (z > O.s0) return ((O.s1 - z) / (O.s1 - O.s0)) * O.h
-  return O.h
-}
-
-/** 기울어진 상판 한 구간: 상판·난간 두 줄·가운데 선 */
-function DeckSpan({ z0, z1, y0, y1 }: { z0: number; z1: number; y0: number; y1: number }) {
-  const O = OVERPASS
-  const len = Math.hypot(z1 - z0, y1 - y0)
-  const pitch = -Math.atan2(y1 - y0, z1 - z0)
-  return (
-    <group position={[O.x, (y0 + y1) / 2, (z0 + z1) / 2]} rotation={[pitch, 0, 0]}>
-      <B s={[O.w, 0.9, len + 0.2]} p={[0, -0.45, 0]} c="#C3C9D6" />
-      <B s={[O.w - 1, 0.04, len]} p={[0, 0.02, 0]} c="#5B6274" cast={false} />
-      <B s={[0.16, 0.05, len - 2]} p={[0, 0.05, 0]} c="#F2C233" cast={false} />
-      {[-O.w / 2 + 0.25, O.w / 2 - 0.25].map((x) => <B key={x} s={[0.4, 1.1, len]} p={[x, 0.55, 0]} c="#E3E7EF" />)}
-    </group>
-  )
-}
-
-export function Overpass() {
-  const O = OVERPASS
-  const piers: number[] = []
-  for (let z = O.n1 - 150; z <= O.s0 + 50; z += 30) if ((z < L.MAIN.z0 - 4 || z > L.MAIN.z1 + 4) && deckY(z) > 2.5) piers.push(z)
-  return (
-    <group>
-      <Merge>
-        <DeckSpan z0={O.n0} z1={O.n1} y0={0} y1={O.h} />
-        <DeckSpan z0={O.n1} z1={O.s0} y0={O.h} y1={O.h} />
-        <DeckSpan z0={O.s0} z1={O.s1} y0={O.h} y1={0} />
-        {piers.map((z) => {
-          const y = deckY(z) - 0.9
-          return (
-            <group key={z} position={[O.x, 0, z]}>
-              <B s={[1.8, y, 1.6]} p={[0, y / 2, 0]} c="#B7BECC" />
-              <B s={[O.w - 1, 0.9, 2]} p={[0, y - 0.45, 0]} c="#AEB6C5" />
-            </group>
-          )
-        })}
-        {/* 경사로 끝에서 이어지는 땅 위 도로: 북쪽은 지도 끝까지, 남쪽은 해안 탱크팜으로 */}
-        <Flat s={[O.w, 120]} p={[O.x, O.n0 - 60]} c="#5B6274" y={0.016} />
-        <Flat s={[O.w, 30]} p={[O.x, O.s1 + 15]} c="#5B6274" y={0.016} />
-        <Flat s={[110, 9]} p={[O.x + 55 + O.w / 2, O.s1 + 22]} c="#5B6274" y={0.016} />
-        {/* 간선 위 표지 "다온대로 위 고가" */}
-        <B s={[O.w + 0.3, 1.4, 0.3]} p={[O.x, O.h + 0.6, L.MAIN.z0 - 1]} c="#1E7A4C" />
-        <B s={[O.w + 0.3, 1.4, 0.3]} p={[O.x, O.h + 0.6, L.MAIN.z1 + 1]} c="#1E7A4C" />
-      </Merge>
-      <OverpassTraffic />
-    </group>
-  )
-}
-
-/** 고가도로 위 일반 차(장식용, 다른 흐름과 무관): 양방향 4대씩 */
-function OverpassTraffic() {
-  const cars = useMemo(() => {
-    const colors = ['#F4F6FA', '#2D3445', '#B8C2D6', '#E45B4B', '#5D79E8', '#8A94A8', '#F4F6FA', '#1F2633']
-    return colors.map((color, i) => ({ color, dir: i % 2 ? 1 : -1, s: (i / colors.length) * 1.0, speed: 15 + (i % 3) * 2, kind: i % 3 === 0 ? 'suv' : 'sedan' as 'suv' | 'sedan' }))
-  }, [])
-  const refs = useRef<(THREE.Group | null)[]>([])
-  const O = OVERPASS
-  const z0 = O.n0 - 110
-  const z1 = O.s1 + 20
-  const span = z1 - z0
-  useFrame((_, dt) => {
-    cars.forEach((c, i) => {
-      c.s = (c.s + (Math.min(dt, 0.05) * c.speed) / span) % 1
-      const g = refs.current[i]
-      if (!g) return
-      const z = c.dir > 0 ? z0 + c.s * span : z1 - c.s * span
-      const x = O.x + c.dir * 2.6
-      const y = deckY(z)
-      const ahead = deckY(z + c.dir * 2)
-      g.position.set(x, y, z)
-      g.rotation.set(-Math.atan2(ahead - y, 2) * c.dir, c.dir > 0 ? 0 : Math.PI, 0)
-    })
-  })
-  return (
-    <>
-      {cars.map((c, i) => (
-        <group key={i} ref={(o) => { refs.current[i] = o }}>
-          <Merge><CarModel color={c.color} kind={c.kind} /></Merge>
-        </group>
-      ))}
-    </>
-  )
-}
 
 /** 해안 탱크팜(가상 "다온 에너지 저장소"): 탱크 6기·배관 랙·줄무늬 굴뚝·사무동 */
 export function TankFarm() {

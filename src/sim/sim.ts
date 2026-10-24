@@ -597,6 +597,13 @@ export class Sim {
     // 이천 피킹 스테이션 작업자(선택할 수 있게 걸어 다니는 사람 목록에 둔다. 제자리에 선다)
     IC.stations.forEach((x, k) => this.life.addScripted(`pk-${k + 1}`, tr('피킹 작업자', 'Picker'), x, IC.stationZ + 1.0, { top: '#2F55E6', vest: true, helmet: '#FFFFFF' }))
     this.port.clock = () => this.clock
+    // 철송: 부산 철송장 ↔ 장치장(육측 ARMG), 곤지암 철송장에서 내린 수입 컨테이너는 CY로
+    this.port.railLink = this.rail
+    this.rail.requestPort = (k) => this.port.requestRail(k)
+    this.rail.onCy = () => {
+      this.cy.today++
+      this.cy.count = Math.min(24, this.cy.count + 1)
+    }
     this.airport.clock = () => this.clock
     this.init()
     // 브라우저: 미리 돌리는 150초(시계로 30분)를 현재 시각 앞쪽에 둬서, 그동안 생긴 기록이 지금 직전 시각을 갖게 한다.

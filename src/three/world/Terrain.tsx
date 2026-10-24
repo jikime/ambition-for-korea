@@ -1,5 +1,5 @@
 // 지형(주변 환경 보강 1순위): 지도 가장자리를 두르는 저폴리 산(계절 색), 북쪽 골짜기에서 내려와 바다로 드는 강,
-// 강을 건너는 간선 다리·철교, 강변(둔치 잔디·자전거길·버드나무), 간선·철로가 지도 밖으로 나가는 터널 입구.
+// 강을 건너는 간선 다리·철교 두 곳(부산 본선 · 중부 철송선), 강변(둔치 잔디·자전거길·버드나무), 간선·철로가 지도 밖으로 나가는 터널 입구.
 // 산은 높이 함수 하나로 만든 격자 메시(면마다 색, 땅 아래로 묻힌 면은 버림)이고 그림자를 쓰지 않는다.
 import { useLayoutEffect, useMemo } from 'react'
 import * as THREE from 'three'
@@ -8,7 +8,7 @@ import { Merge } from '../merge'
 import { useEnvView } from '../env/state'
 import type { Season } from '../../sim/env'
 import * as L from '../../sim/layout'
-import { RAIL } from '../../sim/rail'
+import { GJ_RAIL, RAIL } from '../../sim/rail'
 import { AtlasSign, signId } from '../townAtlas'
 import { Trees } from './Vegetation'
 import { RIVER, RIVER_W } from './plan'
@@ -237,7 +237,6 @@ function Bridges() {
     return best.x
   }
   const rx = at(L.MAIN.z)
-  const tx = at(RAIL.z)
   const span = RIVER_W + 18
   const steel = mat('#7E8796', { rough: 0.5, metal: 0.4 })
   return (
@@ -250,19 +249,26 @@ function Bridges() {
           {[-span / 2, span / 2].map((dx) => <B key={dx} s={[2.4, 1.4, 1.2]} p={[rx + dx, 0.7, z]} c="#C9CFDB" />)}
         </group>
       ))}
-      {/* 철교: 양옆 트러스(아래 · 위 현재 + 수직재) */}
-      {[RAIL.z - 2.2, RAIL.z + 2.2].map((z) => (
-        <group key={z}>
-          <B s={[span, 0.7, 0.35]} p={[tx, 0.45, z]} m={steel} />
-          <B s={[span, 0.4, 0.3]} p={[tx, 4.4, z]} m={steel} />
-          {Array.from({ length: Math.floor(span / 5) + 1 }, (_, i) => (
-            <B key={i} s={[0.3, 4, 0.3]} p={[tx - span / 2 + i * 5, 2.4, z]} m={steel} />
-          ))}
-        </group>
-      ))}
-      {Array.from({ length: Math.floor(span / 5) + 1 }, (_, i) => (
-        <B key={`t${i}`} s={[0.25, 0.25, 4.4]} p={[tx - span / 2 + i * 5, 4.55, RAIL.z]} m={steel} cast={false} />
-      ))}
+      {/* 철교 두 곳(부산 본선 · 중부 철송선): 양옆 트러스(아래 · 위 현재 + 수직재) */}
+      {[RAIL.z, GJ_RAIL.z].map((rz) => {
+        const tx = at(rz)
+        return (
+          <group key={rz}>
+            {[rz - 2.2, rz + 2.2].map((z) => (
+              <group key={z}>
+                <B s={[span, 0.7, 0.35]} p={[tx, 0.45, z]} m={steel} />
+                <B s={[span, 0.4, 0.3]} p={[tx, 4.4, z]} m={steel} />
+                {Array.from({ length: Math.floor(span / 5) + 1 }, (_, i) => (
+                  <B key={i} s={[0.3, 4, 0.3]} p={[tx - span / 2 + i * 5, 2.4, z]} m={steel} />
+                ))}
+              </group>
+            ))}
+            {Array.from({ length: Math.floor(span / 5) + 1 }, (_, i) => (
+              <B key={`t${i}`} s={[0.25, 0.25, 4.4]} p={[tx - span / 2 + i * 5, 4.55, rz]} m={steel} cast={false} />
+            ))}
+          </group>
+        )
+      })}
     </Merge>
   )
 }

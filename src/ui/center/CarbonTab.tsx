@@ -1,5 +1,5 @@
 // 탄소 배출 탭: 오늘 운행에서 생긴 배출(육로·해상·항공), 상자 한 개의 여정별 배출, 같은 상자를 배·비행기로 보낼 때 비교
-import { Plane, Ship, Sun, Truck } from 'lucide-react'
+import { Plane, Ship, Sun, TrainFront, Truck } from 'lucide-react'
 import { sim } from '../../sim/sim'
 import { AIR_KG_TKM, GRID_KG_KWH, ROUTE_KM, SEA_KG_TKM, SOLAR_KWP, TRUCK_KG_KM, TRUCK_LABEL, journeyFootprint } from '../../sim/carbon'
 import { useStore } from '../../store'
@@ -8,7 +8,7 @@ import { L, plural } from '../../i18n'
 import { Stat } from './OpsCenter'
 
 const kgText = (kg: number) => (kg >= 1000 ? `${(kg / 1000).toFixed(1)} t` : kg >= 1 ? `${kg.toFixed(kg < 10 ? 1 : 0)} kg` : `${Math.round(kg * 1000)} g`)
-const MODE_ICON = { road: <Truck size={12} />, sea: <Ship size={12} />, air: <Plane size={12} /> }
+const MODE_ICON = { road: <Truck size={12} />, sea: <Ship size={12} />, air: <Plane size={12} />, rail: <TrainFront size={12} /> }
 
 function Journey({ title, parts, color, max }: { title: string; parts: [string, number][]; color: string; max: number }) {
   const total = parts.reduce((s, [, kg]) => s + kg, 0)
@@ -78,21 +78,23 @@ function Solar() {
 export function CarbonTab() {
   useStore((s) => s.tick)
   const c = sim.carbon
-  const total = c.totals.road + c.totals.sea + c.totals.air
+  const total = c.totals.road + c.totals.sea + c.totals.air + c.totals.rail
   const j = journeyFootprint()
   const sum = (p: [string, number][]) => p.reduce((s, [, kg]) => s + kg, 0)
   const max1 = Math.max(sum(j.land), sum(j.sea), sum(j.air))
   const max2 = Math.max(sum(j.airLA), sum(j.seaLA))
   const trips = Object.values(c.byKind).reduce((s, k) => s + k.trips, 0)
   const seaImports = num(c.log.filter((t) => t.mode === 'sea').length)
-  const railShare = (() => { const road = sim.gateLog.stats.BS.out * 2; const rail = sim.rail.stats.teuIn; return road + rail ? Math.round((rail / (road + rail)) * 100) : 0 })()
-  const shuttles = sim.rail.stats.trains + 6
+  const railShare = (() => { const road = sim.gateLog.stats.BS.out * 2; const rail = sim.rail.stats.toGj * 2; return road + rail ? Math.round((rail / (road + rail)) * 100) : 0 })()
+  const shuttles = sim.rail.stats.arrivals + 6
+  const railRuns = c.log.filter((t) => t.mode === 'rail').length
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-4 gap-2">
+      <div className="grid grid-cols-5 gap-2">
         <Stat label={L('오늘 운행 배출(추정)', 'Trip emissions today (est.)')} value={kgText(total)} sub={L('CO₂e · 예시 계수', 'CO₂e · sample factors')} />
         <Stat label={L('육로 트럭', 'Road trucks')} value={kgText(c.totals.road)} sub={L(`${trips}회 운행`, `${trips} ${plural(trips, 'trip')}`)} />
         <Stat label={L('해상 컨테이너', 'Sea containers')} value={kgText(c.totals.sea)} sub={L(`수입 ${seaImports}건+ · 상하이→부산`, `${seaImports}+ imports · Shanghai→Busan`)} />
+        <Stat label={L('철도 셔틀', 'Rail shuttle')} value={kgText(c.totals.rail)} sub={L(`${railRuns}회 운행 · 부산↔곤지암`, `${railRuns} ${plural(railRuns, 'run')} · Busan↔Gonjiam`)} />
         <Stat label={L('항공 화물기', 'Air freighters')} value={kgText(c.totals.air)} sub={L('인천 → LA · 프랑크푸르트', 'Incheon → LA · Frankfurt')} tone={c.totals.air > c.totals.road ? 'warn' : undefined} />
       </div>
       <Solar />
@@ -101,11 +103,13 @@ export function CarbonTab() {
           <div className="flex h-3 overflow-hidden rounded-full">
             <div className="bg-[#7A5CFF]" style={{ width: `${(c.totals.road / total) * 100}%` }} title={L('육로', 'Road')} />
             <div className="bg-[#2563EB]" style={{ width: `${(c.totals.sea / total) * 100}%` }} title={L('해상', 'Sea')} />
+            <div className="bg-[#16A34A]" style={{ width: `${(c.totals.rail / total) * 100}%` }} title={L('철도', 'Rail')} />
             <div className="bg-[#E8453C]" style={{ width: `${(c.totals.air / total) * 100}%` }} title={L('항공', 'Air')} />
           </div>
           <div className="mt-1 flex gap-3 text-[10.5px] text-muted">
             <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#7A5CFF]" />{L('육로', 'Road')} {Math.round((c.totals.road / total) * 100)}%</span>
             <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#2563EB]" />{L('해상', 'Sea')} {Math.round((c.totals.sea / total) * 100)}%</span>
+            <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#16A34A]" />{L('철도', 'Rail')} {Math.round((c.totals.rail / total) * 100)}%</span>
             <span><span className="mr-1 inline-block h-2 w-2 rounded-sm bg-[#E8453C]" />{L('항공', 'Air')} {Math.round((c.totals.air / total) * 100)}%</span>
             <span className="ml-auto">{L('화물기 한 편이 트럭 수백 회 운행만큼 배출합니다', 'One freighter flight emits as much as hundreds of truck trips')}</span>
           </div>
@@ -133,12 +137,12 @@ export function CarbonTab() {
         <div className="mb-1.5 text-[11.5px] font-semibold text-ink">{L('부산신항 → 곤지암 내륙 운송: 도로 직송 vs 철송', 'Busan New Port → Gonjiam inland: direct road vs rail')}</div>
         <div className="grid grid-cols-2 gap-2">
           <Journey title={L('트레일러 직송', 'Direct trailer')} parts={j.inlandRoad} color="#7A5CFF" max={Math.max(sum(j.inlandRoad), sum(j.inlandRail))} />
-          <Journey title={L('철송 + 짧은 트레일러', 'Rail + short trailer leg')} parts={j.inlandRail} color="#16A34A" max={Math.max(sum(j.inlandRoad), sum(j.inlandRail))} />
+          <Journey title={L('철송 (곤지암 철송장 직행)', 'Rail (direct to Gonjiam rail terminal)')} parts={j.inlandRail} color="#16A34A" max={Math.max(sum(j.inlandRoad), sum(j.inlandRail))} />
         </div>
         <div className="mt-1 text-[11px] text-ink-2">
           {L('철송이 트레일러 직송보다 약 ', 'Rail emits about ')}<span className="font-bold text-ok">{Math.round((1 - sum(j.inlandRail) / sum(j.inlandRoad)) * 100)}%</span>{L(
-            ` 적게 배출합니다(예시 계수). 화면을 연 뒤 부산신항 반출 중 철도 몫 ${railShare}%(철송장 셔틀 ${shuttles}회).`,
-            ` less than a direct trailer (sample factors). Since this page opened, rail carried ${railShare}% of Busan New Port gate-outs (${shuttles} rail terminal ${plural(shuttles, 'shuttle')}).`,
+            ` 적게 배출합니다(예시 계수). 화면을 연 뒤 부산신항 → 곤지암 컨테이너 중 철도 몫 ${railShare}%(철송 셔틀 ${shuttles}회).`,
+            ` less than a direct trailer (sample factors). Since this page opened, rail carried ${railShare}% of Busan New Port → Gonjiam containers (${shuttles} rail ${plural(shuttles, 'shuttle')}).`,
           )}
         </div>
       </div>

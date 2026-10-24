@@ -3,6 +3,7 @@
 //    배출 = 거리 × 차종별 km당 배출(경유 연비 기반 예시: 빈 차/짐 실은 차).
 //  - 배: 부산신항에서 수입 컨테이너를 내릴 때마다 상하이→부산 해상 운송 1건(t·km × 해상 계수).
 //  - 비행기: 화물기가 이륙할 때마다 실은 무게 × 비행 거리 × 항공 계수.
+//  - 철도: 철송 셔틀이 부산신항 ↔ 곤지암 철송장에 설 때마다 실은 컨테이너(개당 18t) × 380km × 철도 계수(빈 화차 몫 1.3배).
 //  실제 산정(GLEC 프레임워크·ISO 14083)은 차량별 연료 사용량·적재율·공차 운행 배분이 필요하다. 여기 값은 비교용 예시다.
 import type { Sim } from './sim'
 import type { Season, Weather } from './env'
@@ -35,7 +36,9 @@ export const ROUTE_KM: Record<string, number> = {
 export const SEA_KM = 870
 export const FLIGHT_KM = (route: string) => (/로스앤젤레스|Los Angeles/.test(route) ? 9600 : /프랑크푸르트|Frankfurt/.test(route) ? 8600 : 5000)
 
-export type Mode = 'road' | 'sea' | 'air'
+export type Mode = 'road' | 'sea' | 'air' | 'rail'
+/** 철송 부산신항 ↔ 곤지암(예시, km) */
+export const RAIL_KM = 380
 
 export interface CarbonTrip {
   time: number
@@ -72,19 +75,18 @@ export function journeyFootprint() {
     [L('트레일러 곤지암 → 부산 380km', 'Trailer Gonjiam → Busan 380km'), truck('trailer', 380, 2000)],
     [L('컨테이너선 부산 → LA 9,700km', 'Container ship Busan → LA 9,700km'), parcel * 9700 * SEA_KG_TKM * 1.4],
   ]
-  // 부산 → 곤지암 내륙 운송: 트레일러 직송 vs 철송(부산신항 철송장 → 내륙 기지) + 짧은 트레일러
+  // 부산 → 곤지암 내륙 운송: 트레일러 직송 vs 철송(부산신항 철송장 → 곤지암 철송장, 구내 트랙터로 CY까지)
   const inlandRoad: [string, number][] = [
     [L('트레일러 부산 → 곤지암 380km', 'Trailer Busan → Gonjiam 380km'), truck('trailer', 380, 2000)],
   ]
   const inlandRail: [string, number][] = [
-    [L('철송 부산신항 → 내륙 기지 360km', 'Rail Busan New Port → inland depot 360km'), parcel * 360 * RAIL_KG_TKM * 1.3 * 1.4],
-    [L('트레일러 내륙 기지 → 곤지암 25km', 'Trailer inland depot → Gonjiam 25km'), truck('trailer', 25, 2000)],
+    [L(`철송 부산신항 → 곤지암 철송장 ${RAIL_KM}km`, `Rail Busan New Port → Gonjiam rail terminal ${RAIL_KM}km`), parcel * RAIL_KM * RAIL_KG_TKM * 1.3 * 1.4],
   ]
   return { land, sea, air, airLA, seaLA, inlandRoad, inlandRail }
 }
 
 export class CarbonLedger {
-  totals: Record<Mode, number> = { road: 0, sea: 0, air: 0 }
+  totals: Record<Mode, number> = { road: 0, sea: 0, air: 0, rail: 0 }
   byKind: Record<string, { trips: number; kg: number; km: number }> = {}
   /** 차량별 오늘 운행 거리(실거리 환산 km)와 배출 */
   byVehicle: Record<string, { km: number; kg: number; trips: number }> = {}
@@ -93,6 +95,7 @@ export class CarbonLedger {
   private departed = -1
   private tons = 0
   private discharged = -1
+  private railRuns = -1
 
   constructor(private sim: Sim) {}
 
@@ -138,6 +141,15 @@ export class CarbonLedger {
       this.discharged++
       const kg = 18 * SEA_KM * SEA_KG_TKM
       this.add({ time: this.sim.clock, mode: 'sea', label: L('수입 컨테이너 상하이 → 부산(18t)', 'Import container Shanghai → Busan (18t)'), km: SEA_KM, kg })
+    }
+    // 철도: 철송 셔틀이 철송장에 섰다(실은 컨테이너 × 18t × 380km, 빈 화차 회송 몫 1.3배)
+    const rail = this.sim.rail
+    if (this.railRuns < 0) this.railRuns = rail.stats.arrivals
+    if (rail.stats.arrivals > this.railRuns && rail.last) {
+      this.railRuns = rail.stats.arrivals
+      const { from, to, n } = rail.last
+      const name = (t: string) => (t === 'BS' ? L('부산신항', 'Busan New Port') : L('곤지암', 'Gonjiam'))
+      this.add({ time: this.sim.clock, mode: 'rail', label: L(`철송 ${name(from)} → ${name(to)} 컨테이너 ${n}개(${n * 18}t)`, `Rail ${name(from)} → ${name(to)} ${n} containers (${n * 18}t)`), km: RAIL_KM, kg: Math.max(1, n) * 18 * RAIL_KM * RAIL_KG_TKM * 1.3 })
     }
     // 비행기: 이륙
     const ap = this.sim.airport.stats

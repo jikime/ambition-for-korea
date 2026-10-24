@@ -120,7 +120,8 @@ export interface Agv {
   reviewT: number
 }
 
-export type ArmgTask = { kind: 'seaIn' | 'seaOut' | 'landIn' | 'landOut'; agv?: number; trailer?: string }
+/** railIn: 부산 철송장이 내린 수출 컨테이너를 장치장으로 · railOut: 장치장의 수입 컨테이너를 철송장으로(구내 트랙터) */
+export type ArmgTask = { kind: 'seaIn' | 'seaOut' | 'landIn' | 'landOut' | 'railIn' | 'railOut'; agv?: number; trailer?: string }
 
 export interface Armg {
   block: number
@@ -179,6 +180,10 @@ export class PortSim {
   clock = () => 0
   /** 해상 여정에서 따라가는 수입 컨테이너: 안벽 크레인이 먼저 내리고, 육측 반출 때 먼저 꺼낸다 */
   focus: Box | null = null
+  /** 따라가는 컨테이너를 무엇으로 내보내나: 트레일러(도로) 또는 철송장(철도) */
+  focusVia: 'road' | 'rail' = 'road'
+  /** 부산 철송장 연결(Sim이 붙인다): 철송장이 내린 수출 컨테이너를 받아 오고, 수입 컨테이너를 넘긴다 */
+  railLink: { takeIn(): Box | null; putOut(b: Box): void } | null = null
 
   /** 따라가는 컨테이너가 장치된 블록(없으면 -1) */
   focusBlock() {
@@ -217,7 +222,7 @@ export class PortSim {
 
   newBox(kind: Box['kind'], blockKind: string = 'general'): Box {
     const color = blockKind === 'reefer' ? REEFER : blockKind === 'dg' ? DG : COLORS[Math.floor(this.r() * COLORS.length)]
-    const prefix = ['NURU', 'HNMU', 'SEOU', 'KORU'][Math.floor(this.r() * 4)]
+    const prefix = ['DAOU', 'HNMU', 'SEOU', 'KORU'][Math.floor(this.r() * 4)]
     return { id: `${prefix}${String(this.seq++ * 7919 % 9000000 + 1000000)}`, color, kind, manifest: null }
   }
 
@@ -473,10 +478,12 @@ export class PortSim {
         { k: 'hoist', y: 20 },
       ]
     }
-    const focusBay = t.kind === 'landOut' && this.focus ? blk.findIndex((bay) => bay.includes(this.focus!)) : -1
+    // 따라가는 컨테이너는 정한 길(트레일러 또는 철송장)로만 먼저 꺼낸다
+    const takesFocus = (t.kind === 'landOut' && this.focusVia === 'road') || (t.kind === 'railOut' && this.focusVia === 'rail')
+    const focusBay = takesFocus && this.focus ? blk.findIndex((bay) => bay.includes(this.focus!)) : -1
     const endZ = t.kind === 'seaIn' || t.kind === 'seaOut' ? PORT.seaZ : PORT.landZ
     const toEnd: Act[] = [{ k: 'gantry', x: endZ }, { k: 'trolley', z: 0 }, { k: 'hoist', y: vehY }]
-    if (t.kind === 'seaIn' || t.kind === 'landIn') {
+    if (t.kind === 'seaIn' || t.kind === 'landIn' || t.kind === 'railIn') {
       arm.acts = [
         ...toEnd,
         {
@@ -486,6 +493,8 @@ export class PortSim {
               arm.box = agv.box
               agv.box = null
               agv.seaInPending = false
+            } else if (t.kind === 'railIn') {
+              arm.box = this.railLink?.takeIn() ?? null
             } else {
               const slot = this.trailers.get(t.trailer!)
               arm.box = slot?.box ?? null
@@ -506,6 +515,11 @@ export class PortSim {
               const agv = this.agvs[t.agv!]
               agv.box = arm.box
               agv.seaOutPending = false
+            } else if (t.kind === 'railOut') {
+              if (arm.box) {
+                this.screen(arm.box)
+                this.railLink?.putOut(arm.box)
+              }
             } else {
               const slot = this.trailers.get(t.trailer!)
               if (slot && arm.box) {
@@ -542,6 +556,20 @@ export class PortSim {
     const arm = this.armgs[block * 2 + 1]
     if (exportBox) arm.tasks.push({ kind: 'landIn', trailer: id })
     arm.tasks.push({ kind: 'landOut', trailer: id })
+  }
+
+  /**
+   * 부산 철송장의 요청: 일반 블록(1·2) 중 육측 ARMG 일이 적은 쪽에 맡긴다.
+   * 철송으로 따라가는 컨테이너가 장치돼 있으면 그 블록이 먼저(꺼낼 때 그 컨테이너부터 꺼낸다)
+   */
+  requestRail(kind: 'railIn' | 'railOut'): boolean {
+    const fb = kind === 'railOut' && this.focusVia === 'rail' ? this.focusBlock() : -1
+    const load = (b: number) => this.armgs[b * 2 + 1].tasks.length + (this.armgs[b * 2 + 1].acts.length ? 1 : 0)
+    const block = fb >= 0 && !this.armgs[fb * 2 + 1].tasks.some((t) => t.kind === 'railOut') ? fb : load(1) <= load(2) ? 1 : 2
+    const arm = this.armgs[block * 2 + 1]
+    if (arm.tasks.length > 6) return false
+    arm.tasks.push({ kind })
+    return true
   }
 
   trailerBox(id: string) {

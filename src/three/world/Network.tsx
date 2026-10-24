@@ -461,7 +461,7 @@ function BsLandside() {
   )
 }
 
-/** 부산신항 철송장(정적): 본선(지도 밖 동쪽 내륙 기지 방면)·RMG 레일·포장·트랙터 차로·운영 사무동·조명탑 */
+/** 부산신항 철송장(정적): 본선(동쪽으로 중부 철송선 분기 · 지도 밖 터널)·RMG 레일·포장·트랙터 차로·운영 사무동·조명탑 */
 export function RailYardStatic() {
   return (
     <Merge>

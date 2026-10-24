@@ -29,25 +29,32 @@ export const aiStats = {
 
 // ───────────────────────── 켜기·끄기
 
-/** 이 브라우저에서 끈 적이 있으면 '0'. 없으면 기본으로 켠다 */
-const LS_ON = 'hubtrace.ai.on'
-/** 예전 판에서 쓰던 값(TypeSafe Jev 키, 브라우저에 넣던 내 키). 이제 쓰지 않으므로 지운다 */
-const LS_OLD = ['nuritrack.jev.on', 'nuritrack.jev.key', 'nuritrack.jev.src', 'hubtrace.ai.key']
+/** 이 탭에서 끄면 '0'(sessionStorage). 앱을 새로 열면 늘 켜진 채로 시작한다 */
+const SS_ON = 'hubtrace.ai.on'
+/** 예전 판에서 브라우저에 오래 남기던 값(TypeSafe Jev 키, 내 키, 켬/끔). 이제 쓰지 않으므로 지운다 */
+const LS_OLD = ['nuritrack.jev.on', 'nuritrack.jev.key', 'nuritrack.jev.src', 'hubtrace.ai.key', 'hubtrace.ai.on']
 
-function lsGet(k: string) {
+function ssGet(k: string) {
   try {
-    return localStorage.getItem(k)
+    return sessionStorage.getItem(k)
   } catch {
     return null
   }
 }
 
-function lsSet(k: string, v: string | null) {
+function ssSet(k: string, v: string) {
   try {
-    if (v === null) localStorage.removeItem(k)
-    else localStorage.setItem(k, v)
+    sessionStorage.setItem(k, v)
   } catch {
     // 저장할 수 없는 환경(사생활 보호 모드 등)이면 이번 화면에서만 쓴다
+  }
+}
+
+function lsRemove(k: string) {
+  try {
+    localStorage.removeItem(k)
+  } catch {
+    // 지울 수 없으면 그대로 둔다(읽지 않는다)
   }
 }
 
@@ -86,12 +93,12 @@ function setOn(on: boolean) {
   useStore.getState().bump()
 }
 
-/** 앱 시작: 기본 규칙으로 연결한 뒤, 서버에 키가 있으면 기본으로 켠다(이 브라우저에서 끈 적이 있으면 꺼 둔다) */
+/** 앱 시작: 기본 규칙으로 연결한 뒤, 서버에 키가 있으면 켠다(이 탭에서 끈 경우만 꺼 둔다) */
 export async function initAi() {
   attachRules()
-  for (const k of LS_OLD) lsSet(k, null)
+  for (const k of LS_OLD) lsRemove(k)
   await fetchStatus()
-  if (aiConfig.configured && lsGet(LS_ON) !== '0') setOn(true)
+  if (aiConfig.configured && ssGet(SS_ON) !== '0') setOn(true)
   useStore.getState().bump()
 }
 
@@ -102,13 +109,13 @@ export async function enableAi(): Promise<AiSwitchResult> {
   if (aiConfig.server === null || !aiConfig.configured) await fetchStatus()
   if (!aiConfig.server) return { ok: false, error: L('이 배포에는 AI 서버(/api/ai)가 없어 켤 수 없습니다. 개발 서버(npm run dev)나 미리보기(npm run preview)에서 쓸 수 있습니다', 'This deployment has no AI server (/api/ai), so AI cannot be turned on. Use the dev server (npm run dev) or preview (npm run preview)') }
   if (!aiConfig.configured) return { ok: false, error: L('서버에 Claude API 키가 없습니다. .env에 ANTHROPIC_API_KEY를 넣고 서버를 다시 시작하세요', 'No Claude API key on the server. Set ANTHROPIC_API_KEY in .env and restart the server') }
-  lsSet(LS_ON, '1')
+  ssSet(SS_ON, '1')
   setOn(true)
   return { ok: true }
 }
 
 export function disableAi() {
-  lsSet(LS_ON, '0')
+  ssSet(SS_ON, '0')
   setOn(false)
 }
 

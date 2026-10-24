@@ -31,6 +31,7 @@ export const SIGNS: Record<string, [string, string, string]> = {
   '부산신항 운영동': ['#FFFFFF', '#2F55E6', 'Busan New Port\nOperations'],
   '세관 검사동': ['#FFFFFF', '#1E3BB3', 'Customs Inspection'],
   '부산신항 철송장': ['#FFFFFF', '#2F55E6', 'Busan New Port Rail Terminal'],
+  '곤지암 철송장': ['#FFFFFF', '#2F55E6', 'Gonjiam Rail Terminal'],
   '다온 에너지 저장소': ['#FFFFFF', '#E2463C', 'Daon Energy Storage'],
   다온터널: ['#1E7A4C', '#FFFFFF', 'Daon Tunnel'],
   '다온 톨게이트': ['#1E3BB3', '#FFFFFF', 'Daon Toll Plaza'],

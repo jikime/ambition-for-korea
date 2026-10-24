@@ -107,4 +107,5 @@ export const FLOWS = [
   { key: 'bsgj', label: L('부산신항 ↔ 곤지암 CY (트레일러)', 'Busan New Port ↔ Gonjiam CY (trailer)'), color: '#FF8A3D', pts: [[64, 38], [64, 53], [180, 53], [180, 292], [262, 292]] },
   { key: 'gjap', label: L('곤지암 ↔ 인천공항 (항공 화물)', 'Gonjiam ↔ Incheon Airport (air cargo)'), color: '#3A9BD9', pts: [[59, 38], [59, 44], [-700, 44], [-700, -14], [-940, -14]] },
   { key: 'gjdj', label: L('곤지암 ↔ 대전 중부허브 (11톤 간선)', 'Gonjiam ↔ Daejeon Central Hub (11-ton linehaul)'), color: '#E0A100', pts: [[64, 38], [64, 51], [701, 51], [701, -14], [640, -14]] },
+  { key: 'rail', label: L('부산신항 ↔ 곤지암 철송장 (컨테이너 열차)', 'Busan New Port ↔ Gonjiam rail terminal (container train)'), color: '#16A34A', pts: [[400, 291], [1000, 291], [1000, -100], [-55, -100]] },
 ] as const
