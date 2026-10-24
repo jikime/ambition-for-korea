@@ -1,6 +1,7 @@
-// 화면 소리: 켜기·끄기(이 탭에서만 기억), 장면 위치 소리, 반복음, 안내 음성.
-// 기본 켜짐이지만 브라우저 정책상 첫 클릭·터치·키 입력이 있어야 실제로 들린다(그때 자동으로 켠다).
-// 이 탭에서 직접 끄면 꺼진 채로 둔다. 안내 음성은 화면 언어를 따르고, 겹치지 않게 차례로,
+// 화면 소리: 켜기·끄기, 장면 위치 소리, 반복음, 안내 음성.
+// 늘 켜진 채로 시작한다(끈 것은 기억하지 않는다). 열자마자 소리를 시작해 보고, 브라우저가 막으면
+// 첫 클릭·터치·키 입력 때 시작한다. 브라우저가 소리를 멈추면(탭을 오래 비움 등) 다음 입력 때 이어 간다.
+// 안내 음성은 화면 언어를 따르고, 겹치지 않게 차례로,
 // 같은 안내는 잠시 쉬었다가 다시 한다(배속을 올려도 쏟아지지 않게 실제 시간으로 잰다).
 import { AudioEngine, type Playback, type Vec3 } from './engine'
 import { useStore } from '../store'
@@ -16,20 +17,16 @@ const PRELOAD = [
   'rail-wheel-clatter-loop', 'diesel-locomotive-idle-loop', 'rail-horn', 'train-air-brake', 'container-lock',
   'truck-air-brake', 'truck-reverse-alarm', `voice-${LANG}-system-ready`,
 ]
-const SS_KEY = 'hubtrace.sound'
+/** 예전 판에서 탭에 남기던 켬/끔(지금은 쓰지 않으므로 지운다) */
+const OLD_KEY = 'hubtrace.sound'
 const now = () => performance.now() / 1000
-
-function ssSet(v: string) {
-  try {
-    sessionStorage.setItem(SS_KEY, v)
-  } catch {
-    // 저장할 수 없으면 이번 화면에서만
-  }
-}
 
 class Sound {
   readonly engine = new AudioEngine()
+  /** 실제로 들리는가 */
   on = false
+  /** 켜 두려는가(사용자가 끄지 않았는가) */
+  private want = true
   private enabling: Promise<void> | null = null
   private loops = new Map<string, { p: Promise<Playback | null>; h: Playback | null }>()
   private gates = new Map<string, number>()
@@ -39,11 +36,11 @@ class Sound {
 
   /** 켠다(클릭·터치 처리 안에서) */
   enable(): Promise<void> {
+    this.want = true
     if (this.on) return Promise.resolve()
     this.enabling ??= this.engine.unlock().then(() => {
       this.on = true
       this.enabling = null
-      ssSet('1')
       useStore.getState().setSound('on')
       this.engine.preload(PRELOAD).catch(() => {})
       this.ui('ui-confirm')
@@ -56,32 +53,32 @@ class Sound {
   }
 
   async disable() {
+    this.want = false
     this.on = false
     this.voices = []
     this.loops.clear()
-    ssSet('0')
     useStore.getState().setSound('off')
     await this.engine.suspend()
   }
 
-  /** 처음 열 때: 이 탭에서 끈 적이 없으면 켜 둔 것으로 보고, 첫 클릭·터치·키 입력에 실제로 켠다 */
+  /**
+   * 앱을 열 때: 켜진 상태로 두고 바로 시작해 본다(브라우저가 허락하면 바로 들린다).
+   * 막히면 첫 클릭·터치·키 입력 때 시작하고, 그 뒤에도 브라우저가 멈춘 소리는 다음 입력 때 이어 간다
+   */
   restore() {
-    let v: string | null = null
     try {
-      v = sessionStorage.getItem(SS_KEY)
+      sessionStorage.removeItem(OLD_KEY)
     } catch {
-      v = null
+      // 지울 수 없으면 그대로 둔다(읽지 않는다)
     }
-    if (v === '0') return
     useStore.getState().setSound('armed')
-    const once = () => {
-      window.removeEventListener('pointerdown', once, true)
-      window.removeEventListener('keydown', once, true)
-      // 그사이 직접 껐으면 켜지 않는다
-      if (useStore.getState().sound === 'armed') void this.enable().catch(() => {})
+    void this.enable().catch(() => {})
+    const wake = () => {
+      if (!this.want) return
+      if (!this.on) void this.enable().catch(() => {})
+      else if (!this.engine.ready) void this.engine.unlock().catch(() => {})
     }
-    window.addEventListener('pointerdown', once, true)
-    window.addEventListener('keydown', once, true)
+    for (const ev of ['pointerdown', 'keydown', 'touchend']) window.addEventListener(ev, wake, true)
   }
 
   /** key마다 sec초에 한 번만 true */

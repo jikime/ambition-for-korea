@@ -83,7 +83,8 @@ export class AudioEngine {
       // Opus(.ogg)를 못 읽는 브라우저는 mp3
       this.ext = new Audio().canPlayType('audio/ogg; codecs=opus') ? 'file' : 'fallback'
     }
-    if (this.context.state !== 'running') await this.context.resume()
+    // 사용자 입력 전이면 브라우저가 시작을 미루고 resume()이 끝나지 않을 수 있다: 잠깐만 기다리고 판단한다
+    if (this.context.state !== 'running') await Promise.race([this.context.resume(), new Promise((r) => setTimeout(r, 300))])
     if (!this.ready) throw new Error('Enable sound from a user click or touch first.')
   }
 
