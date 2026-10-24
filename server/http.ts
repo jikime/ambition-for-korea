@@ -1,4 +1,4 @@
-// /api/ai/* 엔드포인트. Vite 개발·미리보기 서버에 미들웨어로 붙는다.
+// /api/ai/* 엔드포인트. Vite 개발·미리보기 서버에 미들웨어로 붙고, 배포에서는 Vercel 함수(api/ai.ts)가 그대로 쓴다.
 // 키: 서버 환경 변수 ANTHROPIC_API_KEY(로컬은 프로젝트 루트 .env)만 쓴다. 브라우저에는 키를 보내지 않는다.
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import Anthropic from '@anthropic-ai/sdk'
@@ -43,6 +43,43 @@ function scrub(msg: string) {
   return key ? msg.split(key).join('***') : msg
 }
 
+// ───────── 공개 배포 보호(서버 인스턴스 메모리, 최선 노력)
+// 화면 한 탭이 시뮬레이션 사건마다 분당 약 20번 AI를 부르므로, 같은 요청은 답을 재사용하고 한 IP의 호출 수를 제한한다.
+
+/** 한 IP가 1분에 부를 수 있는 횟수(정상 사용의 약 3배) */
+const PER_MIN = 60
+const hits = new Map<string, number[]>()
+function clientIp(req: IncomingMessage) {
+  const f = req.headers['x-forwarded-for']
+  const first = (Array.isArray(f) ? f[0] : f)?.split(',')[0]?.trim()
+  return first || req.socket?.remoteAddress || 'local'
+}
+function overLimit(ip: string) {
+  const now = Date.now()
+  const list = (hits.get(ip) ?? []).filter((t) => now - t < 60_000)
+  list.push(now)
+  hits.set(ip, list)
+  if (hits.size > 5000) for (const [k, v] of hits) if (!v.length || now - v[v.length - 1] > 60_000) hits.delete(k)
+  return list.length > PER_MIN
+}
+
+/** 같은 경로·같은 내용 요청의 답(1시간, 최대 500개) */
+const CACHE_TTL = 3_600_000
+const cache = new Map<string, { at: number; data: unknown }>()
+function cached(key: string) {
+  const c = cache.get(key)
+  if (!c) return null
+  if (Date.now() - c.at > CACHE_TTL) {
+    cache.delete(key)
+    return null
+  }
+  return c.data
+}
+function remember(key: string, data: unknown) {
+  cache.set(key, { at: Date.now(), data })
+  while (cache.size > 500) cache.delete(cache.keys().next().value!)
+}
+
 const strings = (v: unknown, max: number, len: number) =>
   Array.isArray(v) ? v.slice(0, max).map((x) => String(x ?? '').slice(0, len)) : []
 
@@ -66,15 +103,27 @@ export async function aiMiddleware(req: IncomingMessage, res: ServerResponse, ne
     res.end(JSON.stringify({ error: say(req, '서버에 Claude API 키가 없습니다. .env(또는 배포 환경 변수)에 ANTHROPIC_API_KEY를 넣고 서버를 다시 시작하세요', 'No Claude API key on the server. Set ANTHROPIC_API_KEY in .env (or the deployment environment) and restart the server'), code: 'no-key' }))
     return
   }
+  if (overLimit(clientIp(req))) {
+    res.statusCode = 429
+    res.end(JSON.stringify({ error: say(req, '요청이 너무 잦습니다. 잠시 뒤 다시 시도하세요', 'Too many requests. Please try again shortly'), code: 'rate-limit' }))
+    return
+  }
   const t0 = Date.now()
   try {
     const body = await readJson(req)
+    const key = `${url.split('?')[0]}|${JSON.stringify(body)}`
+    const hit = cached(key)
+    if (hit) {
+      res.end(JSON.stringify({ ...(hit as object), ms: 0, cached: true }))
+      return
+    }
     const data = await handle(url, body)
     if (data === null) {
       res.statusCode = 404
       res.end(JSON.stringify({ error: say(req, '알 수 없는 경로', 'Unknown path') }))
       return
     }
+    remember(key, data)
     res.end(JSON.stringify({ ...(data as object), ms: Date.now() - t0 }))
   } catch (e) {
     const msg = scrub(e instanceof Error ? e.message : String(e))

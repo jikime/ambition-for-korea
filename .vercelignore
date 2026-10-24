@@ -1,0 +1,10 @@
+# Vercel로 올리지 않는 것: 원본 에셋 팩(웹용은 public/assets에 있다) · 홍보 영상 작업 · 문서 · 로컬 빌드 · 비밀값
+hubtrace-assets-v2
+hubtrace-environments-v1
+hubtrace-marine-v1
+promo
+docs
+dist
+.shots
+.env
+.env.*

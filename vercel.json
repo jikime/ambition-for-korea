@@ -1,3 +1,7 @@
 {
+  "framework": "vite",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "functions": { "api/ai.ts": { "maxDuration": 60 } },
   "rewrites": [{ "source": "/api/ai/:path*", "destination": "/api/ai?__path=:path*" }]
 }
