@@ -14,6 +14,7 @@ import { AtlasSign, signId } from './townAtlas'
 export type EnvId =
   | 'factory-production-hall' | 'factory-utility-building' | 'silo-farm' | 'process-pipe-rack' | 'industrial-chimney'
   | 'distribution-warehouse' | 'cold-storage-warehouse' | 'surface-parking-lot'
+  | 'urban-microhub' | 'office-tower' | 'office-midrise' | 'mixed-use-corner' | 'landscaped-planter' | 'streetlight-led'
 const url = (id: EnvId) => `/assets/env/${id}.glb`
 /** 그림자를 끄는 납작한 것 */
 const FLAT = new Set<EnvId>(['surface-parking-lot'])
@@ -31,6 +32,7 @@ const RECOLOR: Partial<Record<EnvId, { roof: string; band: string }>> = {
   'cold-storage-warehouse': { roof: '#C4CEE6', band: '#13A39A' },
   'factory-production-hall': { roof: '#D9C7B0', band: '#5B6B90' },
   'factory-utility-building': { roof: '#C9D3C2', band: '#3E8E5A' },
+  'urban-microhub': { roof: '#C4CEE6', band: '#2F55E6' },
 }
 
 function recolorMap(tex: THREE.Texture, roof: string, band: string) {

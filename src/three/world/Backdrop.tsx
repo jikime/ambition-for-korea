@@ -22,8 +22,7 @@ export function Backdrop() {
       ].map(([x, z, h, label]) => (
         <Apartment key={label as string} p={[x as number, z as number]} h={h as number} label={label as string} />
       ))}
-      <Industrial p={[160, -20]} w={48} d={40} h={12} roof="#AFC0EA" />
-      <Industrial p={[150, 18]} w={30} d={20} h={7} roof="#C4CEE6" />
+      {/* x 134 ~ 186 · z −42 ~ 30은 간선도로변 업무지구(world/Landmarks.tsx) */}
       <Industrial p={[24, 88]} w={52} d={28} h={9} roof="#C4CEE6" />
       <Industrial p={[260, -40]} w={56} d={40} h={11} roof="#B9C6E6" />
       {/* 다온휴게소(x -262 ~ -78) 자리를 비워 두고 바깥으로 */}

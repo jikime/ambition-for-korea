@@ -9,6 +9,7 @@ import { NETWORK_VIEW, SITE_META, type SiteId } from '../sim/world'
 import { Ground } from './world/Ground'
 import { Fence, Trees, treeSpots } from './world/Vegetation'
 import { Backdrop, Traffic, YardProps } from './world/Backdrop'
+import { Landmarks } from './world/Landmarks'
 import { Office, SortingCanopy } from './models/structures'
 import { Vehicles } from './entities/Vehicles'
 import { Chargers, Forklifts, Parcels, SiteDynamics, StagedPallets, Workers } from './entities/Equipment'
@@ -276,6 +277,7 @@ export function World() {
       </Merge>
       <Trees spots={spots} />
       <Infill />
+      <Landmarks />
       <LocalRoads />
       <LocalTraffic />
       <Merge>

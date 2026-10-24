@@ -25,6 +25,8 @@ export const NO_TREE: Rect[] = [
   // 강과 둔치(world/Terrain.tsx RIVER, 평지 구간) · 대전 강변 부두(정박지 · 야적장, sim/river.ts WHARF)
   [764, 836, -480, 330],
   [718, 790, -291, -119],
+  // 랜드마크(world/Landmarks.tsx): 다온 콜드체인 센터 · 다온마을 택배 거점 · 간선도로변 업무지구
+  [420, 472, -160, -118], [-595, -566, 60, 96], [132, 190, -44, 36],
 ]
 export const blocked = (x: number, z: number) => NO_TREE.some(([x0, x1, z0, z1]) => x > x0 && x < x1 && z > z0 && z < z1)
 /** 사각형이 나무 금지 구역(거점·도로)과 겹치나 */

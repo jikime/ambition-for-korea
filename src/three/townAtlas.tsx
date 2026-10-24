@@ -55,6 +55,10 @@ export const SIGNS: Record<string, [string, string, string]> = {
   '피아노 교습소': ['#F4F6FB', '#5B6B90', 'Piano Lessons'],
   // 배경 공장·창고(가상 회사)
   '한빛 물산': ['#2F55E6', '#FFFFFF', 'Hanbit Trading'],
+  // 랜드마크(world/Landmarks.tsx)
+  '다온로지스 본사': ['#1E3BB3', '#FFFFFF', 'Daon Logistics HQ'],
+  '다온 콜드체인': ['#13A39A', '#FFFFFF', 'Daon Cold Chain'],
+  '다온마을 택배': ['#2F55E6', '#FFFFFF', 'Daon Village Parcels'],
   '대성 정밀': ['#3B4252', '#FFFFFF', 'Daesung Precision'],
   '다온 식품': ['#3E8E5A', '#FFFFFF', 'Daon Foods'],
   '동해 냉동': ['#13A39A', '#FFFFFF', 'Donghae Cold Storage'],

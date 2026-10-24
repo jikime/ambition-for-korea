@@ -25,6 +25,13 @@ const MODELS = {
   'distribution-warehouse': [512, 0.2, 0.02],
   'cold-storage-warehouse': [512, 0.25, 0.02],
   'surface-parking-lot': [256, 0.2, 0.02],
+  // 랜드마크(한 채씩: 콜드체인 센터 · 다온마을 택배 거점 · 간선도로변 업무지구)는 덜 줄인다
+  'urban-microhub': [512, 0.6, 0.005],
+  'office-tower': [512, 0.6, 0.005],
+  'office-midrise': [512, 0.6, 0.005],
+  'mixed-use-corner': [512, 0.6, 0.005],
+  'landscaped-planter': [256, 1, 0.001],
+  'streetlight-led': [256, 1, 0.001],
 }
 const only = rest.slice(1)
 
