@@ -1,0 +1,40 @@
+// 환경 모델 만들기: hubtrace 도시·산업 환경 팩의 GLB를 웹용으로 줄인다(meshopt 압축 · 텍스처 크기 제한 · 형상 단순화).
+// 노드 계층과 extras(지붕·정면·내부 구역 표시 section, 문 움직임 motion)를 지키려고 장면을 펼치거나 합치지 않는다
+// (재질별로 합치기와 내부 빼기는 화면 코드 three/env.ts가 한다).
+//  - lod1: 관제 화면 배경(산업단지 등)용 LOD1 → public/assets/env/<id>.glb
+// 사용: node scripts/build-env.mjs [팩 폴더(기본 hubtrace-environments-v1)] [id ...]  — npx로 glTF-Transform CLI를 받아 쓴다
+import { execFileSync } from 'node:child_process'
+import { mkdirSync, statSync } from 'node:fs'
+import { join, resolve } from 'node:path'
+
+const PACK = resolve(process.argv[2] ?? 'hubtrace-environments-v1')
+const OUT = resolve('public/assets/env')
+
+/** id → [텍스처 최대 크기, 남길 삼각형 비율, 허용 오차(모델 크기 대비)] (LOD1 기준). 산업단지 배경은 수십 채라 멀리서 티 나지 않을 만큼 더 줄인다 */
+const MODELS = {
+  // 산업단지(공장 · 창고 · 주차장 칸): 89칸에 100채 넘게 놓이므로 외관 실루엣만 남길 만큼 줄인다
+  'factory-production-hall': [512, 0.35, 0.02],
+  'factory-utility-building': [512, 0.35, 0.02],
+  'silo-farm': [256, 0.07, 0.02],
+  'process-pipe-rack': [256, 0.2, 0.02],
+  'industrial-chimney': [256, 0.15, 0.02],
+  'distribution-warehouse': [512, 0.2, 0.02],
+  'cold-storage-warehouse': [512, 0.25, 0.02],
+  'surface-parking-lot': [256, 0.2, 0.02],
+}
+const only = process.argv.slice(3)
+mkdirSync(OUT, { recursive: true })
+
+for (const [id, [size, ratio, error]] of Object.entries(MODELS)) {
+  if (only.length && !only.includes(id)) continue
+  const src = join(PACK, 'models', 'lod1', `${id}.glb`)
+  const dst = join(OUT, `${id}.glb`)
+  execFileSync('npx', [
+    '-y', '@gltf-transform/cli@4.1.1', 'optimize', src, dst,
+    // 텍스처는 손실 압축하지 않는다: 단색 재질을 모은 팔레트 텍스처(색 칸)가 흐려지면 화면에서 색을 바꿔 칠할 칸을 못 찾는다
+    '--compress', 'meshopt', '--texture-compress', 'false', '--texture-size', String(size),
+    '--simplify', 'true', '--simplify-ratio', String(ratio), '--simplify-error', String(error),
+    '--join', 'false', '--flatten', 'false', '--instance', 'false',
+  ], { stdio: ['ignore', 'ignore', 'inherit'] })
+  console.log(`${id}: ${(statSync(src).size / 1024).toFixed(0)} KB → ${(statSync(dst).size / 1024).toFixed(0)} KB`)
+}
