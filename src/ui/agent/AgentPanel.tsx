@@ -8,6 +8,7 @@ import { agent, percentiles, useAgent, type Msg } from '../../ai/agent/store'
 import { stt, tts } from '../../ai/agent/speech'
 import { useTasks } from '../../ai/agent/tools'
 import { L } from '../../i18n'
+import { LABELS_INLINE, LABELS_PR } from '../labels'
 import { useStore } from '../../store'
 import { useAgentDock } from './layout'
 
@@ -307,12 +308,12 @@ export function AgentLauncher() {
     <button
       type="button"
       onClick={() => (open ? agent.closePanel() : agent.openPanel())}
-      className={`pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full border p-1 min-[1780px]:pr-2.5 text-[12px] font-semibold transition-colors ${open ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-2 hover:border-brand'}`}
+      className={`pointer-events-auto flex shrink-0 items-center gap-1.5 rounded-full border p-1 ${LABELS_PR} text-[12px] font-semibold transition-colors ${open ? 'border-brand bg-brand text-white' : 'border-line bg-white text-ink-2 hover:border-brand'}`}
       aria-pressed={open}
       aria-label={L('hubtrace 물류관리원 열기', 'Open hubtrace assistant')}
     >
       <img src={AVATAR_URL} alt="" className="h-6 w-6 rounded-full bg-brand-soft object-contain" />
-      <span className="hidden whitespace-nowrap min-[1780px]:inline">{L('물류관리원', 'Assistant')}</span>
+      <span className={`hidden whitespace-nowrap ${LABELS_INLINE}`}>{L('물류관리원', 'Assistant')}</span>
     </button>
   )
 }

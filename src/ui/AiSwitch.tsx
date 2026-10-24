@@ -77,7 +77,7 @@ export function AiSwitch() {
         <span className={`relative h-3.5 w-6 rounded-full ${on ? (err ? 'bg-warn' : 'bg-brand') : 'bg-faint/50'}`}>
           <span className={`absolute top-0.5 h-2.5 w-2.5 rounded-full bg-white ${on ? 'left-3' : 'left-0.5'}`} />
         </span>
-        <span className="hidden xl:inline">{!on ? L('꺼짐', 'Off') : aiStats.calls ? `${Math.round(aiStats.avgMs)}ms` : L('켜짐', 'On')}</span>
+        <span className="hidden min-[1440px]:inline">{!on ? L('꺼짐', 'Off') : aiStats.calls ? `${Math.round(aiStats.avgMs)}ms` : L('켜짐', 'On')}</span>
       </button>
       {open && (
         <div className="panel rise absolute right-0 top-11 z-50 w-[340px] space-y-3 p-3">

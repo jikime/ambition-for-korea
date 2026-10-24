@@ -24,6 +24,7 @@ import { CenterButton } from './center/OpsCenter'
 import { ai } from '../sim/ai'
 import { carrierName, forkliftStatus, hhmm, siteOf, siteSummary, vehicleStatus, type Tone } from './format'
 import { L, LL, isEn } from '../i18n'
+import { LABELS_BLOCK, LABELS_INLINE } from './labels'
 
 interface Hit {
   sel: Selection
@@ -160,7 +161,7 @@ function SearchBox() {
   }
 
   return (
-    <div className="relative w-[160px] min-[1440px]:w-[min(380px,18vw)]">
+    <div className="relative w-[160px] min-[1440px]:w-[min(380px,15vw)]">
       <label className="flex h-9 items-center gap-2 rounded-xl border border-line bg-white px-3 text-[13px] text-muted focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/15">
         {busy ? <Loader2 size={15} className="animate-spin text-brand" /> : <Search size={15} strokeWidth={2.2} />}
         <input
@@ -461,12 +462,13 @@ function SoundToggle() {
 
 export function TopBar() {
   useStore((s) => s.tick)
+  // z-45: 상단 바의 팝오버(AI · 거점 · 알림)가 물류관리원 패널(z-40) · 운영 센터(z-30) 위에 뜨게. 알림 토스트(z-50) · 승인 창(z-60)보다는 아래
   return (
-    <header className="pointer-events-auto absolute inset-x-0 top-0 z-30 flex h-14 items-center gap-3 min-[1440px]:gap-4 border-b border-line bg-white/95 px-4 backdrop-blur">
+    <header className="pointer-events-auto absolute inset-x-0 top-0 z-[45] flex h-14 items-center gap-3 min-[1440px]:gap-4 border-b border-line bg-white/95 px-4 backdrop-blur">
       <div className="flex items-center gap-2">
         <LogoMark size={26} />
         <span className="text-[17px] font-extrabold tracking-[-0.02em]">HubTrace</span>
-        <span className="hidden whitespace-nowrap rounded-md bg-line-2 px-1.5 py-0.5 text-[11px] font-semibold text-muted min-[1780px]:inline">{L('다온로지스 관제', 'Daon Logistics Control')}</span>
+        <span className={`hidden whitespace-nowrap rounded-md bg-line-2 px-1.5 py-0.5 text-[11px] font-semibold text-muted ${LABELS_INLINE}`}>{L('다온로지스 관제', 'Daon Logistics Control')}</span>
       </div>
       <div className="ml-2 min-[1780px]:ml-6">
         <SearchBox />
@@ -484,7 +486,7 @@ export function TopBar() {
         <Notifications />
         <div className="flex items-center gap-2 border-l border-line pl-3">
           <Avatar size={32} />
-          <span className="hidden leading-tight min-[1780px]:block">
+          <span className={`hidden leading-tight ${LABELS_BLOCK}`}>
             <span className="block whitespace-nowrap text-[13px] font-semibold">{MANAGER.name}</span>
             <span className="block whitespace-nowrap text-[11px] text-muted">{MANAGER.role}</span>
           </span>

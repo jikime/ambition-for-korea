@@ -8,6 +8,7 @@ import { useEnvView } from '../three/env/state'
 import { hhmm } from './format'
 import { exitReplay } from './replay'
 import { L } from '../i18n'
+import { LABELS_INLINE } from './labels'
 
 const SEASON_ICON: Record<Season, typeof Sun> = { spring: Flower2, summer: TreeDeciduous, autumn: Leaf, winter: TreePine }
 const TIME_ICON: Record<TimeOfDay, typeof Sun> = { dawn: Sunrise, day: Sun, sunset: Sunset, night: Moon }
@@ -88,7 +89,7 @@ export function EnvControl() {
         <span className="mx-0.5 h-3 w-px bg-ok/30" />
         <SIcon size={13} />
         <WIcon size={13} />
-        <span className="hidden min-[1780px]:inline">{SEASON_LABEL[env.season]} · {env.weather === 'clear' ? TIME_LABEL[env.time] : WEATHER_LABEL[env.weather]}</span>
+        <span className={`hidden ${LABELS_INLINE}`}>{SEASON_LABEL[env.season]} · {env.weather === 'clear' ? TIME_LABEL[env.time] : WEATHER_LABEL[env.weather]}</span>
         {!allAuto && <span className="h-1.5 w-1.5 rounded-full bg-warn" />}
       </button>
       {open && (
