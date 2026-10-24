@@ -3,6 +3,7 @@
 import { B, Cyl, Flat, RB, boxUV, cylGeo, mat, sphereGeo, torusGeo } from '../kit'
 import { AtlasSign, signId } from '../townAtlas'
 import { officeFaceMat } from '../sharedMats'
+import { Prop } from '../props'
 
 const glass = () => mat('#9DB2E8', { rough: 0.2, metal: 0.1 })
 
@@ -226,6 +227,16 @@ export function ConstructionSite({ w = 30, d = 56 }: { w?: number; d?: number })
             <B key={i} s={[0.45, 3, 0.45]} p={[x, 1.5 + f * 3, z]} c="#C9CFDA" />
           ))}
         </group>
+      ))}
+      {/* 출입구(동쪽 가림막 틈): 양옆 이동식 안전 펜스, 앞 보도에 안전 콘. 자재 더미 둘레도 펜스 */}
+      {[d / 2 - 10.6, d / 2 - 0.6].map((z) => (
+        <group key={z} position={[w / 2 + 0.5, 0, z]} rotation={[0, Math.PI / 2, 0]}><Prop id="safety-barrier" /></group>
+      ))}
+      {[d / 2 - 9, d / 2 - 7.6, d / 2 - 3.4, d / 2 - 2].map((z) => (
+        <group key={z} position={[w / 2 + 1.4, 0, z]}><Prop id="traffic-cone" /></group>
+      ))}
+      {[[4.4, 13.3, 0], [7.6, 13.3, 0], [8.9, 12, Math.PI / 2]].map(([x, z, r]) => (
+        <group key={`${x}${z}`} position={[x, 0, z]} rotation={[0, r, 0]}><Prop id="safety-barrier" /></group>
       ))}
       {/* 자재 더미 · 컨테이너 사무실 · 레미콘 */}
       <B s={[4, 0.6, 1.2]} p={[6, 0.3, 12]} c="#8A94A8" />

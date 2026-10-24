@@ -14,6 +14,7 @@ type TreeSpec = [number, number, number, number?]
 
 export { NO_TREE, blocked, rectBlocked } from './zones'
 import { blocked } from './zones'
+import { Prop } from '../props'
 import { roadRects } from './plan'
 
 /** 나무 배치(결정론적) */
@@ -246,8 +247,28 @@ export function Fence({ x0, x1, z0, z1, gaps = [], open = [] }: {
     parts.forEach((p) => p.dispose())
     return g
   }, [segs])
+  // 보안 카메라: 막힌 모서리 안쪽에서 부지 가운데를 본다(출입구는 게이트 OCR 카메라가 있다)
+  const cams = useMemo(() => {
+    const cx = (x0 + x1) / 2
+    const cz = (z0 + z1) / 2
+    const out: { x: number; z: number; yaw: number }[] = []
+    const look = (x: number, z: number, tx: number, tz: number) => out.push({ x, z, yaw: Math.atan2(tx - x, tz - z) })
+    const has = (s: 'N' | 'S' | 'W' | 'E') => !open.includes(s)
+    for (const [x, z, a, b] of [[x0, z0, 'W', 'N'], [x1, z0, 'E', 'N'], [x0, z1, 'W', 'S'], [x1, z1, 'E', 'S']] as const) {
+      if (!has(a) && !has(b)) continue
+      const ix = x + Math.sign(cx - x) * 0.7
+      const iz = z + Math.sign(cz - z) * 0.7
+      look(ix, iz, cx, cz)
+    }
+    return out
+  }, [x0, x1, z0, z1, open])
   return (
     <group>
+      {cams.map((c, i) => (
+        <group key={i} position={[c.x, 0, c.z]} rotation={[0, c.yaw, 0]}>
+          <Prop id="security-camera" />
+        </group>
+      ))}
       <primitive object={posts} />
       <mesh geometry={panelGeo} material={fenceMat()} castShadow userData={{ noMerge: true }} />
       {segs.map((s, i) => (

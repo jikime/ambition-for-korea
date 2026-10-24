@@ -4,13 +4,14 @@ import * as THREE from 'three'
 import { sim, type Forklift } from '../../sim/sim'
 import * as L from '../../sim/layout'
 import { useStore } from '../../store'
-import { ChargerModel, ForkliftModel, PalletModel, Person, PinModel } from '../models/equipment'
+import { ForkliftModel, PalletModel, Person, PinModel } from '../models/equipment'
 import { HubBuilding, type DoorRefs } from '../models/structures'
 import { beltTex } from '../textures'
-import { mat, rboxGeo, refreshBounds } from '../kit'
+import { mat, rboxGeo, refreshBounds, sphereGeo, unitBox } from '../kit'
 import { pickHandlers } from './Vehicles'
 import { Merge } from '../merge'
 import { DetailModel, useDetail } from '../detail'
+import { Prop } from '../props'
 
 function ForkliftEntity({ f }: { f: Forklift }) {
   const group = useRef<THREE.Group>(null)
@@ -62,20 +63,28 @@ export function Forklifts() {
   )
 }
 
+/** 지게차 충전 스테이션(에셋 팩 GLB, props.tsx) + 충전 중 표시등. 보이지 않는 상자로 누를 수 있게 한다 */
 export function Chargers() {
   useStore((s) => s.tick)
+  const hit = useMemo(() => new THREE.MeshBasicMaterial({ visible: false }), [])
   return (
     <group>
-      {sim.chargers.map((c) => (
-        <group key={c.id} position={[c.x, 0, c.z]} {...pickHandlers({ kind: 'charger', id: c.id })}>
-          <Merge>
-            <ChargerModel active={!!c.forklift && sim.forklift(c.forklift)?.status === 'charging'} />
-          </Merge>
-        </group>
-      ))}
+      {sim.chargers.map((c) => {
+        const on = !!c.forklift && sim.forklift(c.forklift)?.status === 'charging'
+        return (
+          <group key={c.id} position={[c.x, 0, c.z]} {...pickHandlers({ kind: 'charger', id: c.id })}>
+            <Prop id="charging-station" />
+            <mesh geometry={unitBox} scale={[0.8, 1.6, 0.55]} position={[0, 0.8, 0.05]} material={hit} />
+            <mesh geometry={sphereGeo(0.04, 10, 8)} position={[0.2, 1.47, 0.24]} material={on ? LED_ON : LED_OFF} />
+          </group>
+        )
+      })}
     </group>
   )
 }
+
+const LED_ON = mat('#35D07F', { emissive: '#35D07F', emissiveIntensity: 1.4 })
+const LED_OFF = mat('#7E8798')
 
 /** 적치장 파렛트와 위치 핀 */
 export function StagedPallets() {

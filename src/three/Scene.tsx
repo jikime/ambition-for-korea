@@ -19,6 +19,7 @@ import { YardLabels } from './fx/YardLabels'
 import { FlowLines, OverviewLabels, StoryMarker, VehicleBeacons } from './fx/Overview'
 import { SoundBridge } from '../audio/SoundBridge'
 import { DetailDirector, useDetail } from './detail'
+import { PropLayer } from './props'
 import { sound } from '../audio/sound'
 import { Merge } from './merge'
 import * as L from '../sim/layout'
@@ -362,6 +363,7 @@ export function Scene() {
       <FlowLines />
       <SoundBridge />
       <DetailDirector />
+      <PropLayer />
     </Canvas>
   )
 }

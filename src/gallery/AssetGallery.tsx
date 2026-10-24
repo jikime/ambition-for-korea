@@ -48,7 +48,7 @@ export default function AssetGallery() {
         <Slot p={[-16, 0]} label={L('파렛트 · 화장지', 'Pallet · Toilet paper')}><PalletModel look="wrapped" /></Slot>
         <Slot p={[-12, 0]} label={L('파렛트 · 혼적', 'Pallet · Mixed load')}><PalletModel look="mixed" /></Slot>
         <Slot p={[-8, 0]} label={L('빈 파렛트 더미', 'Empty pallet stack')}><PalletStack n={7} /></Slot>
-        <Slot p={[-4, 0]} label={L('롤테이너', 'Roll cage')}><RollCage fill={0.6} /></Slot>
+        <Slot p={[-4, 0]} label={L('롤테이너', 'Roll cage')}><RollCage fill={0.6} glb={false} /></Slot>
         <Slot p={[0, 0]} label={L('충전기', 'Charger')}><ChargerModel active /></Slot>
         <Slot p={[4, 0]} label={L('작업자', 'Worker')}><Person /></Slot>
         <Slot p={[8, 0]} label={L('위치 핀', 'Location pin')}><PinModel /></Slot>

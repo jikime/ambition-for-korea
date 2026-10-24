@@ -21,6 +21,12 @@ const MODELS = {
   forklift: [1024, 0.3, 'parts'],
   'warehouse-worker': [1024, 0.5, 'rig'],
   'delivery-courier': [1024, 0.5, 'rig'],
+  // 가벼운 소품(여러 개를 InstancedMesh로)
+  'traffic-cone': [256, 0.5, 'static'],
+  'safety-barrier': [512, 1, 'static'],
+  'roll-cage': [512, 0.3, 'static'],
+  'security-camera': [256, 0.6, 'static'],
+  'charging-station': [512, 0.5, 'static'],
 }
 const only = process.argv.slice(3)
 mkdirSync(OUT, { recursive: true })

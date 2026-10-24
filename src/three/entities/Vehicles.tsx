@@ -174,7 +174,7 @@ function VehicleEntity({ v }: { v: Vehicle }) {
           <Merge>
             {[-4.7, -3.8].flatMap((z) => [-0.6, 0.3].map((x) => (
               <group key={`${x}${z}`} position={[x, 1.3, z]}>
-                <RollCage fill={0.7} />
+                <RollCage fill={0.7} glb={false} />
               </group>
             )))}
           </Merge>

@@ -3,6 +3,7 @@ import { useMemo } from 'react'
 import { B, COLORS, Cyl, RB, coneGeo, cylGeo, mat, sphereGeo, torusGeo, unitBox } from '../kit'
 import { chargerScreenTex, loadTex, meshTex, palletSideTex } from '../textures'
 import type { PalletLook } from '../../sim/data'
+import { Prop } from '../props'
 
 const dark = () => mat('#2E3442', { rough: 0.6 })
 
@@ -75,16 +76,34 @@ export function PalletStack({ n = 6 }: { n?: number }) {
   return <mesh geometry={unitBox} position={[0, 0.07 * n, 0]} scale={[1.1, 0.14 * n, 1.1]} material={base} castShadow receiveShadow />
 }
 
-/** 롤테이너(롤 컨테이너) */
-export function RollCage({ fill = 0.6, color = '#2F55E6' }: { fill?: number; color?: string }) {
+/** 롤테이너(롤 컨테이너). 움직이지 않는 자리는 에셋 팩 GLB 철망 카트(props.tsx), 움직이는 것 안(glb=false)은 코드 모델. 짐은 둘 다 코드 */
+export function RollCage({ fill = 0.6, color = '#2F55E6', glb = true }: { fill?: number; color?: string; glb?: boolean }) {
+  if (glb) return <RollCageGlb fill={fill} color={color} />
+  return <RollCageModel fill={fill} color={color} />
+}
+
+function cageLoad() {
+  const t = loadTex('parcel')
+  const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 })
+  return [m, m, mat('#D9AE76'), m, m, m] as THREE.Material[]
+}
+
+function RollCageGlb({ fill, color }: { fill: number; color: string }) {
+  const load = useMemo(cageLoad, [])
+  const H = 1.45
+  return (
+    <group>
+      <Prop id="roll-cage" color={color} />
+      {fill > 0 && <mesh geometry={unitBox} position={[0, 0.24 + (H * fill) / 2, 0]} scale={[0.74, H * fill, 0.62]} material={load} castShadow />}
+    </group>
+  )
+}
+
+function RollCageModel({ fill, color }: { fill: number; color: string }) {
   const grid = useMemo(() => new THREE.MeshStandardMaterial({
     map: meshTex('#9AA4B8', 14), transparent: true, alphaTest: 0.4, side: THREE.DoubleSide, roughness: 0.5, metalness: 0.3,
   }), [])
-  const load = useMemo(() => {
-    const t = loadTex('parcel')
-    const m = new THREE.MeshStandardMaterial({ map: t, roughness: 0.8 })
-    return [m, m, mat('#D9AE76'), m, m, m] as THREE.Material[]
-  }, [])
+  const load = useMemo(cageLoad, [])
   const H = 1.7
   return (
     <group>

@@ -4,7 +4,8 @@ import type { CameraControlsImpl } from '@react-three/drei'
 import * as THREE from 'three'
 import { Apartment, Industrial, ShippingContainer, StreetLight } from '../models/structures'
 import { CarModel, BoxTruckModel } from '../models/vehicles'
-import { PalletStack, RollCage, Cone } from '../models/equipment'
+import { PalletStack, RollCage } from '../models/equipment'
+import { Prop } from '../props'
 import * as L from '../../sim/layout'
 import { sim } from '../../sim/sim'
 import { LANES } from '../../sim/traffic'
@@ -61,7 +62,13 @@ export function YardProps() {
       ))}
       {[[57.2, 31], [57.2, 29.6], [66.8, 30.8]].map(([x, z], i) => (
         <group key={i} position={[x, 0, z]}>
-          <Cone />
+          <Prop id="traffic-cone" />
+        </group>
+      ))}
+      {/* 지게차 충전 구역(바닥 표시) 앞 모서리 안전 콘 */}
+      {[-28.5, -20.5].map((x) => (
+        <group key={x} position={[x, 0, -4.6]}>
+          <Prop id="traffic-cone" />
         </group>
       ))}
       {/* 관리동 주차장 */}
