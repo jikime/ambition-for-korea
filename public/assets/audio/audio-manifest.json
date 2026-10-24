@@ -1,0 +1,436 @@
+{
+ "title": "hubtrace audio (web)",
+ "source": "hubtrace-assets-v2 · CC0 (voices: Windows Heami/Zira renders)",
+ "assets": [
+  {
+   "id": "voice-ko-system-ready",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "허브트레이스 관제를 시작합니다.",
+   "duration": 2.5065,
+   "file": "voice-ko-system-ready.ogg",
+   "fallback": "voice-ko-system-ready.mp3"
+  },
+  {
+   "id": "voice-en-system-ready",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "hubtrace operations are ready.",
+   "duration": 1.9583,
+   "file": "voice-en-system-ready.ogg",
+   "fallback": "voice-en-system-ready.mp3"
+  },
+  {
+   "id": "voice-ko-vehicle-arrival",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "차량이 게이트에 도착했습니다.",
+   "duration": 2.3313,
+   "file": "voice-ko-vehicle-arrival.ogg",
+   "fallback": "voice-ko-vehicle-arrival.mp3"
+  },
+  {
+   "id": "voice-en-vehicle-arrival",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "A vehicle has arrived at the gate.",
+   "duration": 1.9319,
+   "file": "voice-en-vehicle-arrival.ogg",
+   "fallback": "voice-en-vehicle-arrival.mp3"
+  },
+  {
+   "id": "voice-ko-vehicle-arrival-radio",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "차량이 게이트에 도착했습니다.",
+   "duration": 2.5813,
+   "file": "voice-ko-vehicle-arrival-radio.ogg",
+   "fallback": "voice-ko-vehicle-arrival-radio.mp3"
+  },
+  {
+   "id": "voice-en-vehicle-arrival-radio",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "A vehicle has arrived at the gate.",
+   "duration": 2.1819,
+   "file": "voice-en-vehicle-arrival-radio.ogg",
+   "fallback": "voice-en-vehicle-arrival-radio.mp3"
+  },
+  {
+   "id": "voice-ko-unloading-start",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "하차 작업을 시작합니다. 주변을 확인해 주세요.",
+   "duration": 4.3034,
+   "file": "voice-ko-unloading-start.ogg",
+   "fallback": "voice-ko-unloading-start.mp3"
+  },
+  {
+   "id": "voice-en-unloading-start",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "Unloading is starting. Please check your surroundings.",
+   "duration": 3.8845,
+   "file": "voice-en-unloading-start.ogg",
+   "fallback": "voice-en-unloading-start.mp3"
+  },
+  {
+   "id": "voice-ko-loading-complete",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "적재가 완료되었습니다. 출발을 준비해 주세요.",
+   "duration": 4.3069,
+   "file": "voice-ko-loading-complete.ogg",
+   "fallback": "voice-ko-loading-complete.mp3"
+  },
+  {
+   "id": "voice-en-loading-complete",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "Loading is complete. Prepare for departure.",
+   "duration": 3.3899,
+   "file": "voice-en-loading-complete.ogg",
+   "fallback": "voice-en-loading-complete.mp3"
+  },
+  {
+   "id": "voice-ko-dispatch",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "배송 차량이 출발했습니다.",
+   "duration": 2.1557,
+   "file": "voice-ko-dispatch.ogg",
+   "fallback": "voice-ko-dispatch.mp3"
+  },
+  {
+   "id": "voice-en-dispatch",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "The delivery vehicle has departed.",
+   "duration": 1.8933,
+   "file": "voice-en-dispatch.ogg",
+   "fallback": "voice-en-dispatch.mp3"
+  },
+  {
+   "id": "voice-ko-delivery-complete",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "배송이 완료되었습니다.",
+   "duration": 1.8234,
+   "file": "voice-ko-delivery-complete.ogg",
+   "fallback": "voice-ko-delivery-complete.mp3"
+  },
+  {
+   "id": "voice-en-delivery-complete",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "Delivery is complete.",
+   "duration": 1.4845,
+   "file": "voice-en-delivery-complete.ogg",
+   "fallback": "voice-en-delivery-complete.mp3"
+  },
+  {
+   "id": "voice-ko-temperature-alert",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "냉장 화물의 온도를 확인해 주세요.",
+   "duration": 2.5866,
+   "file": "voice-ko-temperature-alert.ogg",
+   "fallback": "voice-ko-temperature-alert.mp3"
+  },
+  {
+   "id": "voice-en-temperature-alert",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "Please check the temperature of the refrigerated cargo.",
+   "duration": 2.9142,
+   "file": "voice-en-temperature-alert.ogg",
+   "fallback": "voice-en-temperature-alert.mp3"
+  },
+  {
+   "id": "voice-ko-battery-low",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "장비 배터리가 부족합니다. 충전 구역으로 이동해 주세요.",
+   "duration": 4.8434,
+   "file": "voice-ko-battery-low.ogg",
+   "fallback": "voice-ko-battery-low.mp3"
+  },
+  {
+   "id": "voice-en-battery-low",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "Equipment battery is low. Please proceed to the charging area.",
+   "duration": 4.3824,
+   "file": "voice-en-battery-low.ogg",
+   "fallback": "voice-en-battery-low.mp3"
+  },
+  {
+   "id": "voice-ko-route-updated",
+   "type": "voice",
+   "loop": false,
+   "language": "ko",
+   "transcript": "교통 상황에 따라 경로가 변경되었습니다.",
+   "duration": 3.1885,
+   "file": "voice-ko-route-updated.ogg",
+   "fallback": "voice-ko-route-updated.mp3"
+  },
+  {
+   "id": "voice-en-route-updated",
+   "type": "voice",
+   "loop": false,
+   "language": "en",
+   "transcript": "The route has been updated due to traffic conditions.",
+   "duration": 2.9138,
+   "file": "voice-en-route-updated.ogg",
+   "fallback": "voice-en-route-updated.mp3"
+  },
+  {
+   "id": "rail-horn",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 3.4,
+   "file": "rail-horn.ogg",
+   "fallback": "rail-horn.mp3"
+  },
+  {
+   "id": "rail-wheel-clatter-loop",
+   "type": "sfx",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 12,
+   "file": "rail-wheel-clatter-loop.ogg",
+   "fallback": "rail-wheel-clatter-loop.mp3"
+  },
+  {
+   "id": "train-air-brake",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 3.2,
+   "file": "train-air-brake.ogg",
+   "fallback": "train-air-brake.mp3"
+  },
+  {
+   "id": "coupler-clank",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 2.4,
+   "file": "coupler-clank.ogg",
+   "fallback": "coupler-clank.mp3"
+  },
+  {
+   "id": "diesel-locomotive-idle-loop",
+   "type": "sfx",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 12,
+   "file": "diesel-locomotive-idle-loop.ogg",
+   "fallback": "diesel-locomotive-idle-loop.mp3"
+  },
+  {
+   "id": "container-lock",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 1.6,
+   "file": "container-lock.ogg",
+   "fallback": "container-lock.mp3"
+  },
+  {
+   "id": "truck-air-brake",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 1.7,
+   "file": "truck-air-brake.ogg",
+   "fallback": "truck-air-brake.mp3"
+  },
+  {
+   "id": "truck-reverse-alarm",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 3.2,
+   "file": "truck-reverse-alarm.ogg",
+   "fallback": "truck-reverse-alarm.mp3"
+  },
+  {
+   "id": "cargo-roll-shutter",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 3.8,
+   "file": "cargo-roll-shutter.ogg",
+   "fallback": "cargo-roll-shutter.mp3"
+  },
+  {
+   "id": "scanner-success-1",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.4,
+   "file": "scanner-success-1.ogg",
+   "fallback": "scanner-success-1.mp3"
+  },
+  {
+   "id": "scanner-success-2",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.4,
+   "file": "scanner-success-2.ogg",
+   "fallback": "scanner-success-2.mp3"
+  },
+  {
+   "id": "scanner-success-3",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.4,
+   "file": "scanner-success-3.ogg",
+   "fallback": "scanner-success-3.mp3"
+  },
+  {
+   "id": "scanner-reject",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.65,
+   "file": "scanner-reject.ogg",
+   "fallback": "scanner-reject.mp3"
+  },
+  {
+   "id": "conveyor-motor-loop",
+   "type": "sfx",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 8,
+   "file": "conveyor-motor-loop.ogg",
+   "fallback": "conveyor-motor-loop.mp3"
+  },
+  {
+   "id": "radio-ptt-in",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.26,
+   "file": "radio-ptt-in.ogg",
+   "fallback": "radio-ptt-in.mp3"
+  },
+  {
+   "id": "radio-ptt-out",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.32,
+   "file": "radio-ptt-out.ogg",
+   "fallback": "radio-ptt-out.mp3"
+  },
+  {
+   "id": "ui-confirm",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.45,
+   "file": "ui-confirm.ogg",
+   "fallback": "ui-confirm.mp3"
+  },
+  {
+   "id": "ui-warning",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.7,
+   "file": "ui-warning.ogg",
+   "fallback": "ui-warning.mp3"
+  },
+  {
+   "id": "ui-dispatch",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 0.7,
+   "file": "ui-dispatch.ogg",
+   "fallback": "ui-dispatch.mp3"
+  },
+  {
+   "id": "light-rain-loop",
+   "type": "ambience",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 10,
+   "file": "light-rain-loop.ogg",
+   "fallback": "light-rain-loop.mp3"
+  },
+  {
+   "id": "light-wind-loop",
+   "type": "ambience",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 10,
+   "file": "light-wind-loop.ogg",
+   "fallback": "light-wind-loop.mp3"
+  },
+  {
+   "id": "yard-distant-traffic-loop",
+   "type": "ambience",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 12,
+   "file": "yard-distant-traffic-loop.ogg",
+   "fallback": "yard-distant-traffic-loop.mp3"
+  },
+  {
+   "id": "warehouse-room-loop",
+   "type": "ambience",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 12,
+   "file": "warehouse-room-loop.ogg",
+   "fallback": "warehouse-room-loop.mp3"
+  }
+ ]
+}

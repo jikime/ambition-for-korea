@@ -2,7 +2,8 @@ import { PendingPill, openApproval } from './ApproveDialog'
 import { CONTROLLER } from '../sim/approvals'
 import { LINK_LABEL as LINKS, impactFactor, type Incident as Inc, type LinkId } from '../sim/incidents'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { Bell, ChevronDown, ChevronRight, History, Search, Layers, Loader2, Sparkles, X } from 'lucide-react'
+import { Bell, ChevronDown, ChevronRight, History, Search, Layers, Loader2, Sparkles, Volume2, VolumeX, X } from 'lucide-react'
+import { sound } from '../audio/sound'
 import { runCommand, type CommandResult } from '../ai/command'
 import { sim } from '../sim/sim'
 import { ITEMS, MANAGER } from '../sim/data'
@@ -426,6 +427,35 @@ function Notifications() {
   )
 }
 
+/** 소리 켜기·끄기(기본 켜짐, 브라우저 정책상 첫 클릭·키 입력 때 들리기 시작). 철송·트럭·허브 소리와 안내 음성이 화면 언어로 나온다 */
+function SoundToggle() {
+  const state = useStore((s) => s.sound)
+  const on = state !== 'off'
+  const [busy, setBusy] = useState(false)
+  const click = () => {
+    if (busy) return
+    // 첫 클릭을 기다리던 중이면 이 클릭이 켠다(끄지 않는다)
+    if (state === 'on') {
+      void sound.disable()
+      return
+    }
+    setBusy(true)
+    sound.enable().catch(() => {}).finally(() => setBusy(false))
+  }
+  return (
+    <button
+      type="button"
+      onClick={click}
+      aria-label={on ? L('소리 끄기', 'Turn sound off') : L('소리 켜기', 'Turn sound on')}
+      aria-pressed={on}
+      title={state === 'on' ? L('소리 켜짐 · 누르면 끕니다', 'Sound on · click to mute') : state === 'armed' ? L('소리 켜짐 · 화면을 한 번 누르면 들리기 시작합니다', 'Sound on · starts after your first click') : L('소리 꺼짐 · 누르면 현장 소리와 안내 음성이 나옵니다', 'Sound off · click for site sounds and voice alerts')}
+      className={`grid h-8 w-8 place-items-center rounded-full ${on ? 'bg-brand-soft text-brand' : 'bg-line-2 text-muted hover:text-ink'}`}
+    >
+      {busy ? <Loader2 size={15} className="animate-spin" /> : on ? <Volume2 size={15} /> : <VolumeX size={15} />}
+    </button>
+  )
+}
+
 export function TopBar() {
   useStore((s) => s.tick)
   return (
@@ -444,6 +474,7 @@ export function TopBar() {
         <SiteSwitcher />
         <SpeedControl />
         <AiSwitch />
+        <SoundToggle />
         <EnvControl />
         <LangSwitch />
         <Notifications />

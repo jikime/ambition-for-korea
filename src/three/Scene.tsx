@@ -17,6 +17,8 @@ import { ReverseCues, RoutePath } from './fx/RoutePath'
 import { StatusChips } from './fx/StatusChips'
 import { YardLabels } from './fx/YardLabels'
 import { FlowLines, OverviewLabels, StoryMarker, VehicleBeacons } from './fx/Overview'
+import { SoundBridge } from '../audio/SoundBridge'
+import { sound } from '../audio/sound'
 import { Merge } from './merge'
 import * as L from '../sim/layout'
 import { L as tr } from '../i18n'
@@ -61,7 +63,7 @@ function DevHandle() {
   const scene = useThree((s) => s.scene)
   const controls = useThree((s) => s.controls)
   useEffect(() => {
-    if (import.meta.env.DEV) Object.assign(window, { __gl: gl, __scene: scene, __store: useStore, __sim: sim, __controls: controls })
+    if (import.meta.env.DEV) Object.assign(window, { __gl: gl, __scene: scene, __store: useStore, __sim: sim, __controls: controls, __sound: sound })
   }, [gl, scene, controls])
   return null
 }
@@ -357,6 +359,7 @@ export function Scene() {
       <OverviewLabels />
       <VehicleBeacons />
       <FlowLines />
+      <SoundBridge />
     </Canvas>
   )
 }

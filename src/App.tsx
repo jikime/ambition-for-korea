@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Scene } from './three/Scene'
 import { useStore } from './store'
 import { initAi } from './ai/judge'
+import { sound } from './audio/sound'
 import { TopBar } from './ui/TopBar'
 import { Kpis, MapControls, Toast } from './ui/Overlays'
 import { Inspector } from './ui/Inspector'
@@ -15,6 +16,7 @@ import { L } from './i18n'
 
 export default function App() {
   useEffect(() => void initAi(), [])
+  useEffect(() => sound.restore(), [])
   // 장면이 밤이면 패널도 어두운 테마로 바꾼다
   const time = useEnvView((s) => s.env.time)
   const panels = useStore((s) => s.panels)

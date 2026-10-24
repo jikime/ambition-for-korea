@@ -68,6 +68,9 @@ interface State {
   /** 상단 AI 설정 창이 열려 있는가 */
   aiOpen: boolean
   setAiOpen: (open: boolean) => void
+  /** 소리: 꺼짐 · 켜짐(첫 클릭·키 입력을 기다리는 중) · 켜짐(들림). src/audio/sound.ts가 바꾼다 */
+  sound: 'off' | 'armed' | 'on'
+  setSound: (s: 'off' | 'armed' | 'on') => void
   /** 운영 센터 창(열린 탭, 닫혀 있으면 null) */
   center: CenterTab | null
   openCenter: (t: CenterTab | null) => void
@@ -101,6 +104,8 @@ export const useStore = create<State>((set, get) => ({
   env: { season: 'auto', time: 'auto', weather: 'auto' },
   setEnv: (patch) => set({ env: { ...get().env, ...patch } }),
   aiOpen: false,
+  sound: 'off',
+  setSound: (s) => set({ sound: s }),
   setAiOpen: (open) => set({ aiOpen: open }),
   center: null,
   openCenter: (t) => set({ center: t }),
