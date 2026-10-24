@@ -6,6 +6,7 @@ import { useStore, type CamCmd } from '../store'
 import type { SiteId } from '../sim/world'
 import { num } from './format'
 import { L, plural } from '../i18n'
+import { useAgentDock } from './agent/layout'
 
 function Kpi({ icon, label, value, unit, delta, sub }: { icon: ReactNode; label: string; value: string; unit?: string; delta: string; sub: string }) {
   return (
@@ -135,13 +136,16 @@ export function MapControls() {
   const cam = (c: CamCmd) => () => useStore.getState().camera(c)
   const labels = useStore((s) => s.labels)
   const panels = useStore((s) => s.panels)
+  // 물류관리원 패널이 열리면 그 왼쪽으로(오른쪽 열에 자리 잡았으면 상세 정보 왼쪽, 좁으면 KPI 카드 줄 아래로) 비켜선다
+  const dock = useAgentDock()
+  const place = dock.docked && panels ? `right-[756px] ${dock.roomy ? 'top-[72px]' : 'top-[160px]'}` : dock.open ? 'right-[440px] top-[72px]' : panels ? 'right-[332px] top-[72px]' : 'right-4 top-[72px]'
   const view = useStore((s) => s.view)
   const beaconMode = useStore((s) => s.beaconMode)
   const lens = useStore((s) => s.lens)
   const btn = 'grid h-9 w-9 place-items-center text-ink-2 hover:bg-line-2 hover:text-ink transition-colors'
   const on = 'grid h-9 w-9 place-items-center bg-brand-soft text-brand transition-colors'
   return (
-    <div className={`pointer-events-auto absolute ${panels ? 'right-[332px]' : 'right-4'} top-[72px] z-20 flex flex-col items-end`}>
+    <div className={`pointer-events-auto absolute ${place} z-20 flex flex-col items-end`}>
       <div className="panel flex flex-col overflow-hidden">
         <button type="button" aria-label={L('확대', 'Zoom in')} title={L('확대', 'Zoom in')} className={btn} onClick={cam('zoomIn')}><Plus size={17} /></button>
         <button type="button" aria-label={L('축소', 'Zoom out')} title={L('축소', 'Zoom out')} className={`${btn} border-t border-line`} onClick={cam('zoomOut')}><Minus size={17} /></button>

@@ -1,0 +1,11 @@
+{
+  // 에이전트 점검 스크립트: 서버(server/agent) + 브라우저 실행기(src/ai/agent)를 함께 불러 Node(tsx)로 돌린다
+  "extends": "./tsconfig.node.json",
+  "compilerOptions": {
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
+    "types": ["node", "vite/client"]
+  },
+  "include": ["scripts/agent-check.ts", "scripts/agent-eval.ts"],
+  "exclude": []
+}

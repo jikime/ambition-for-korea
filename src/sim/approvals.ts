@@ -174,17 +174,43 @@ export class Approvals {
     })
   }
 
-  /** 뒤쪽 정차지 2곳을 다음에 인천에서 떠날 배송차로 넘긴다 */
-  private proposeMove(v: Vehicle, reason: string) {
+  /**
+   * 정차지 이관 계획: 다온마을 배송 중인 배송차의 뒤쪽 정차지 2곳을 곧 인천에서 떠날 배송차로 넘긴다(아무것도 바꾸지 않는다).
+   * version은 대상 상태(남은 정차지 · 받는 차)를 묶은 값이라, 실행할 때 다시 계산해 같아야만 실행한다
+   */
+  planMove(v: Vehicle): MovePlan | null {
+    if (v.kind !== 'van' || v.home !== 'IN' || v.site !== 'TW' || v.stops.length - v.stopIdx < 2 || this.sim.movedStops.has(v.id)) return null
     // 받는 차: 인천에서 곧 떠날 배송차 중 아직 이관을 받지 않은 차
     const cand = this.sim.vehicles
       .filter((o) => o !== v && o.kind === 'van' && o.home === 'IN' && o.site === 'IN' && !this.sim.extraStops[o.id])
       .sort((a, b) => (b.phase === 'loading' ? b.cargoDone / Math.max(1, b.cargoTotal) : -1) - (a.phase === 'loading' ? a.cargoDone / Math.max(1, a.cargoTotal) : -1))[0]
-    if (!cand) return
+    if (!cand) return null
     const rest = v.stops.slice(v.stopIdx)
     const moved = rest.slice(-2)
-    const saved = Math.round((moved.length * 14 * SPEEDUP) / 60)
-    this.propose({
+    return {
+      from: v, to: cand, rest, moved,
+      saved: Math.round((moved.length * 14 * SPEEDUP) / 60),
+      version: `${v.id}.${v.trip}.${v.stopIdx}.${moved.map((s) => s.id).join('+')}.${cand.id}`,
+    }
+  }
+
+  /** 이관 계획 실행(승인된 제안의 apply). 결과 문장을 돌려준다 */
+  private applyMove(plan: MovePlan) {
+    const { from: v, to: cand, moved } = plan
+    const set = this.sim.movedStops.get(v.id) ?? new Set<string>()
+    for (const s of moved) set.add(s.id)
+    this.sim.movedStops.set(v.id, set)
+    this.sim.extraStops[cand.id] = [...new Set([...(this.sim.extraStops[cand.id] ?? []), ...moved.map((s) => s.id)])].slice(0, 6)
+    const names = moved.map((s) => s.label.replace(L('다온마을 아파트 ', 'Daon Village Apt '), '')).join('·')
+    this.sim.logV(v, 'move', L(`정차지 ${names} → ${cand.id} 이관`, `Stops ${names} → moved to ${cand.id}`))
+    this.sim.logV(cand, 'move', L(`이관 받음: ${names}`, `Took over: ${names}`))
+    return L(`${moved.length}곳 이관`, `${moved.length} ${plural(moved.length, 'stop')} moved`)
+  }
+
+  /** 이관 제안(대기 목록에 올린다). reason: 왜 필요한가 */
+  proposePlan(plan: MovePlan, reason: string) {
+    const { from: v, to: cand, rest, moved } = plan
+    return this.propose({
       kind: 'move', target: v.id, impact: 'high',
       title: L(`${v.id} → ${cand.id} 정차지 ${moved.length}곳 이관`, `${v.id} → ${cand.id}: move ${moved.length} ${plural(moved.length, 'stop')}`),
       why: L(
@@ -197,24 +223,40 @@ export class Approvals {
         lines: moved.map((s) => `${s.label} → ${cand.id}`),
         inWin: true,
       },
-      effect: [
-        L(`${v.id} 약 ${saved}분 단축(정차지당 배송 시간)`, `${v.id} about ${saved} min sooner (delivery time per stop)`),
-        L(`${cand.id} 정차지 ${moved.length}곳 늘어남(출발 때 경로에 붙임)`, `${cand.id} gets ${moved.length} more ${plural(moved.length, 'stop')} (added to its route at departure)`),
-        L('주행 거리는 같음(일방통행 순환로)', 'Same driving distance (one-way loop)'),
-      ],
-      apply: () => {
-        const set = this.sim.movedStops.get(v.id) ?? new Set<string>()
-        for (const s of moved) set.add(s.id)
-        this.sim.movedStops.set(v.id, set)
-        this.sim.extraStops[cand.id] = [...new Set([...(this.sim.extraStops[cand.id] ?? []), ...moved.map((s) => s.id)])].slice(0, 6)
-        const names = moved.map((s) => s.label.replace(L('다온마을 아파트 ', 'Daon Village Apt '), '')).join('·')
-        this.sim.logV(v, 'move', L(`정차지 ${names} → ${cand.id} 이관`, `Stops ${names} → moved to ${cand.id}`))
-        this.sim.logV(cand, 'move', L(`이관 받음: ${names}`, `Took over: ${names}`))
-        return L(`${moved.length}곳 이관`, `${moved.length} ${plural(moved.length, 'stop')} moved`)
-      },
+      effect: moveEffect(plan),
+      apply: () => this.applyMove(plan),
       valid: () => v.site === 'TW' && moved.every((s) => v.stops.findIndex((x) => x.id === s.id) >= v.stopIdx) && cand.site === 'IN',
     })
   }
+
+  /** 뒤쪽 정차지 2곳을 다음에 인천에서 떠날 배송차로 넘기자고 제안한다 */
+  private proposeMove(v: Vehicle, reason: string) {
+    const plan = this.planMove(v)
+    if (plan) this.proposePlan(plan, reason)
+  }
+}
+
+/** 이관 계획(planMove) */
+export interface MovePlan {
+  from: Vehicle
+  to: Vehicle
+  /** 남은 정차지(이관 전) */
+  rest: Vehicle['stops']
+  /** 넘길 정차지 */
+  moved: Vehicle['stops']
+  /** 넘기는 차가 줄이는 시간(분, 정차지당 배송 시간) */
+  saved: number
+  /** 대상 상태를 묶은 값(실행 직전에 다시 계산해 같아야 한다) */
+  version: string
+}
+
+export function moveEffect(plan: MovePlan) {
+  const { from: v, to: cand, moved, saved } = plan
+  return [
+    L(`${v.id} 약 ${saved}분 단축(정차지당 배송 시간)`, `${v.id} about ${saved} min sooner (delivery time per stop)`),
+    L(`${cand.id} 정차지 ${moved.length}곳 늘어남(출발 때 경로에 붙임)`, `${cand.id} gets ${moved.length} more ${plural(moved.length, 'stop')} (added to its route at departure)`),
+    L('주행 거리는 같음(일방통행 순환로)', 'Same driving distance (one-way loop)'),
+  ]
 }
 
 function hm(t: number) {

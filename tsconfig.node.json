@@ -10,5 +10,7 @@
     "noEmit": true,
     "types": ["node"]
   },
-  "include": ["server", "scripts", "api", "vite.config.ts"]
+  "include": ["server", "scripts", "api", "vite.config.ts"],
+  // 화면 코드(src/ai/agent)까지 불러오는 에이전트 점검 스크립트는 tsconfig.agent.json에서 DOM 타입과 함께 검사한다
+  "exclude": ["scripts/agent-check.ts", "scripts/agent-eval.ts"]
 }

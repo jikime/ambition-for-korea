@@ -88,7 +88,7 @@ export function EnvControl() {
         <span className="mx-0.5 h-3 w-px bg-ok/30" />
         <SIcon size={13} />
         <WIcon size={13} />
-        <span className="hidden 2xl:inline">{SEASON_LABEL[env.season]} · {env.weather === 'clear' ? TIME_LABEL[env.time] : WEATHER_LABEL[env.weather]}</span>
+        <span className="hidden min-[1780px]:inline">{SEASON_LABEL[env.season]} · {env.weather === 'clear' ? TIME_LABEL[env.time] : WEATHER_LABEL[env.weather]}</span>
         {!allAuto && <span className="h-1.5 w-1.5 rounded-full bg-warn" />}
       </button>
       {open && (

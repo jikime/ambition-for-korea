@@ -13,9 +13,14 @@ import { ApproveDialog } from './ui/ApproveDialog'
 import { Timeline } from './ui/Timeline'
 import { useEnvView } from './three/env/state'
 import { L } from './i18n'
+import { AgentPanel } from './ui/agent/AgentPanel'
+import { agent } from './ai/agent/store'
+import { boot } from './boot'
 
 export default function App() {
   useEffect(() => void initAi(), [])
+  // 물류관리원 챗봇은 기본으로 열어 둔다(로딩 화면이 사라진 뒤 인사 동작이 보이게)
+  useEffect(() => boot.onDone(() => setTimeout(() => agent.autoOpen(), 500)), [])
   useEffect(() => sound.restore(), [])
   // 장면이 밤이면 패널도 어두운 테마로 바꾼다
   const time = useEnvView((s) => s.env.time)
@@ -44,6 +49,7 @@ export default function App() {
         <OpsCenter />
         <ApproveDialog />
         <Toast />
+        <AgentPanel />
       </div>
     </div>
   )

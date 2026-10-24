@@ -5,8 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && vite build",
-    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json",
+    "build": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.agent.json && vite build",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.agent.json",
     "preview": "vite preview",
     "simcheck": "tsx scripts/simcheck.ts",
     "ailab": "tsx scripts/ai-lab.ts",
@@ -17,7 +17,9 @@
     "rest": "tsx scripts/rest-check.ts",
     "overlap": "tsx scripts/overlap.ts",
     "promise": "tsx scripts/promise-check.ts",
-    "journeys": "tsx scripts/journey-check.ts"
+    "journeys": "tsx scripts/journey-check.ts",
+    "agentcheck": "tsx scripts/agent-check.ts",
+    "agenteval": "tsx scripts/agent-eval.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.3.0",

@@ -25,6 +25,7 @@ import { VCAUSE_LABEL, type VesselCause } from '../sim/vessel'
 import { RAIL_STATE_LABEL, STOP, type TermId } from '../sim/rail'
 import { BARGE, BARGE_STATE } from '../sim/barge'
 import { L, LL, plural } from '../i18n'
+import { useAgentDock } from './agent/layout'
 
 function Header({ glyph, kicker, kickerColor, title, sub, sel, followable }: {
   glyph: ReactNode
@@ -1383,6 +1384,7 @@ export function Inspector() {
   const sel = useStore((s) => s.selected)
   const site = useStore((s) => s.site)
   const view = useStore((s) => s.view)
+  const { docked } = useAgentDock()
   let body: ReactNode = view === 'network' ? <NetworkView /> : <SiteView id={site} />
   if (sel?.kind === 'vehicle') {
     const v = sim.vehicle(sel.id)
@@ -1403,7 +1405,7 @@ export function Inspector() {
   return (
     <aside
       key={sel ? `${sel.kind}-${sel.id}` : `site-${site}`}
-      className="panel rise scroll-thin pointer-events-auto absolute right-4 top-[72px] z-20 w-[304px] overflow-y-auto p-3.5"
+      className={`panel rise scroll-thin pointer-events-auto absolute ${docked ? 'right-[440px]' : 'right-4'} top-[72px] z-20 w-[304px] overflow-y-auto p-3.5`}
       style={{ maxHeight: 'calc(100vh - 72px - 262px - var(--tl, 0px))' }}
       aria-label={L('상세 정보', 'Details')}
     >
