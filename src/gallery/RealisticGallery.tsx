@@ -253,10 +253,17 @@ export default function RealisticGallery() {
     let live = true
     fetch(url(id), { method: 'HEAD' })
       .then((r) => Number(r.headers.get('content-length')) || null)
-      .then((n) => { if (live) setBytes(n) })
+      .then((n) => { if (live && n) setBytes(n) })
       .catch(() => {})
     return () => { live = false }
   }, [id])
+  // 배포 서버는 HEAD에 크기를 주지 않을 수 있어, 모델을 받은 뒤 브라우저가 기록한 실제 크기로 채운다
+  useEffect(() => {
+    if (!stats) return
+    const e = performance.getEntriesByType('resource').reverse().find((r) => r.name.endsWith(url(id))) as PerformanceResourceTiming | undefined
+    const n = e ? e.decodedBodySize || e.encodedBodySize : 0
+    if (n) setBytes((b) => b ?? n)
+  }, [stats, id])
 
   const pick = (next: string) => {
     if (next === id) return
