@@ -16,6 +16,7 @@ import type { Mover } from '../sim/life'
 import type { Parts } from './models/vehicles'
 import { bake, webMaterial } from './glb'
 import { preloadHumans } from './humans'
+import { boot } from '../boot'
 
 export type DetailAsset = 'delivery-truck' | 'wing-truck' | 'reefer-truck' | 'forklift'
 const url = (a: DetailAsset) => `/assets/models/${a}.glb`
@@ -181,7 +182,8 @@ export function DetailDirector() {
   const controls = useThree((s) => s.controls) as unknown as CameraControlsImpl | null
   const target = useMemo(() => new THREE.Vector3(), [])
   const acc = useMemo(() => ({ t: 1 }), [])
-  useEffect(() => preloadDetail(), [])
+  // 가까이 볼 때만 쓰는 모델이라 첫 화면 로딩이 끝난 뒤에 미리 받는다
+  useEffect(() => boot.onDone(preloadDetail), [])
   useFrame((_, dt) => {
     acc.t += dt
     if (acc.t < 0.3) return

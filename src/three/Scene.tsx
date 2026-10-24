@@ -20,6 +20,7 @@ import { FlowLines, OverviewLabels, StoryMarker, VehicleBeacons } from './fx/Ove
 import { SoundBridge } from '../audio/SoundBridge'
 import { DetailDirector, useDetail } from './detail'
 import { PropLayer } from './props'
+import { BootProgress } from './BootProgress'
 import { sound } from '../audio/sound'
 import { Merge } from './merge'
 import * as L from '../sim/layout'
@@ -367,6 +368,7 @@ export function Scene() {
       <SoundBridge />
       <DetailDirector />
       <PropLayer />
+      <BootProgress />
     </Canvas>
   )
 }
