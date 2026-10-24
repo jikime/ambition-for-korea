@@ -1,0 +1,3 @@
+{
+  "rewrites": [{ "source": "/api/ai/:path*", "destination": "/api/ai?__path=:path*" }]
+}
