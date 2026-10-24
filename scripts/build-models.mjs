@@ -27,6 +27,18 @@ const MODELS = {
   'roll-cage': [512, 0.3, 'static'],
   'security-camera': [256, 0.6, 'static'],
   'charging-station': [512, 0.5, 'static'],
+  // 3D 갤러리(?view=realistic)에서만 보는 모델 · 내륙 화물선
+  sedan: [1024, 0.3, 'static'],
+  'pallet-jack': [512, 0.4, 'static'],
+  'roller-conveyor': [512, 0.3, 'static'],
+  'pallet-cargo': [512, 0.4, 'static'],
+  'pallet-rack': [512, 0.2, 'static'],
+  'semi-tractor': [1024, 0.3, 'static'],
+  'container-semitrailer': [1024, 0.3, 'static'],
+  'freight-boxcar': [1024, 0.3, 'static'],
+  'tank-wagon': [1024, 0.3, 'static'],
+  'railway-track': [512, 0.1, 'static'],
+  'inland-container-barge': [1024, 0.25, 'static'],
 }
 const only = process.argv.slice(3)
 mkdirSync(OUT, { recursive: true })
