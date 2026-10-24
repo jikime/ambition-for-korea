@@ -325,15 +325,20 @@ function WorkerHuman({ m }: { m: Mover }) {
     drawnWorkers.add(m.id)
     return () => { drawnWorkers.delete(m.id) }
   }, [m.id])
-  useFrame(() => {
+  const yaw = useRef<number | null>(null)
+  useFrame((_, dt) => {
     if (!g.current) return
     g.current.position.set(m.x, 0, m.z)
-    g.current.rotation.y = m.heading
+    // 모퉁이에서 방향이 한 번에 꺾이면 디딤발이 휙 돌아가므로 짧게 돌려 준다
+    if (yaw.current === null) yaw.current = m.heading
+    const diff = Math.atan2(Math.sin(m.heading - yaw.current), Math.cos(m.heading - yaw.current))
+    yaw.current += diff * Math.min(1, dt * 9)
+    g.current.rotation.y = yaw.current
     if (box.current) box.current.visible = m.carry === 'box'
   })
   return (
     <group ref={g} {...pickHandlers({ kind: 'mover', id: m.id })}>
-      <HumanModel asset="warehouse-worker" moving={() => m.moving} pace={Math.max(0.7, m.speed / 1.3)} />
+      <HumanModel asset="warehouse-worker" />
       <mesh ref={box} geometry={rboxGeo(0.42, 0.3, 0.34, 0.03, 1)} material={mat('#D6A76C')} position={[0, 1.02, 0.36]} castShadow visible={false} />
     </group>
   )

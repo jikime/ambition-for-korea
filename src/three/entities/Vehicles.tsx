@@ -204,7 +204,7 @@ function VehicleEntity({ v }: { v: Vehicle }) {
         {courier ? (
           // 가까이 보면 택배 상자를 든 배송기사 모델(GLB)
           <Suspense fallback={<MemoWalker />}>
-            <HumanModel asset="delivery-courier" moving={() => v.walk.stage !== 'door'} pace={1.25} />
+            <HumanModel asset="delivery-courier" />
           </Suspense>
         ) : <MemoWalker />}
       </group>
