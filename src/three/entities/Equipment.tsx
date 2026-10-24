@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react'
+import { Suspense, useMemo, useRef } from 'react'
 import { useFrame } from '@react-three/fiber'
 import * as THREE from 'three'
 import { sim, type Forklift } from '../../sim/sim'
@@ -10,6 +10,7 @@ import { beltTex } from '../textures'
 import { mat, rboxGeo, refreshBounds } from '../kit'
 import { pickHandlers } from './Vehicles'
 import { Merge } from '../merge'
+import { DetailModel, useDetail } from '../detail'
 
 function ForkliftEntity({ f }: { f: Forklift }) {
   const group = useRef<THREE.Group>(null)
@@ -19,6 +20,8 @@ function ForkliftEntity({ f }: { f: Forklift }) {
   const carrying = useStore(() => f.carrying)
   const look = carrying ? sim.pallets.get(carrying)?.look ?? 'boxes' : 'boxes'
   const handlers = useMemo(() => pickHandlers({ kind: 'forklift', id: f.id }), [f.id])
+  // 가까이 보는 몇 대만 상세 모델(GLB). 불러오는 동안은 지금 모델
+  const detail = useDetail((s) => s.forklifts.has(f.id))
   useFrame(({ clock }) => {
     const g = group.current
     if (!g) return
@@ -28,15 +31,23 @@ function ForkliftEntity({ f }: { f: Forklift }) {
     if (load.current) load.current.visible = !!f.carrying
     if (beacon.current) beacon.current.visible = !f.moving || Math.sin(clock.elapsedTime * 10) > -0.2
   })
+  const cargo = (
+    <group ref={load} position={[0, 0.03, 1.55]} userData={{ skip: true }}>
+      <PalletModel look={look} height={1.0} />
+    </group>
+  )
+  const simple = (
+    <Merge>
+      <ForkliftModel carriageRef={(o) => { carriage.current = o }} beaconRef={(o) => { beacon.current = o }}>
+        {cargo}
+      </ForkliftModel>
+    </Merge>
+  )
   return (
     <group ref={group} {...handlers}>
-      <Merge>
-        <ForkliftModel carriageRef={(o) => { carriage.current = o }} beaconRef={(o) => { beacon.current = o }}>
-          <group ref={load} position={[0, 0.03, 1.55]} userData={{ skip: true }}>
-            <PalletModel look={look} height={1.0} />
-          </group>
-        </ForkliftModel>
-      </Merge>
+      {detail
+        ? <Suspense fallback={simple}><DetailModel asset="forklift" carriageRef={(o) => { carriage.current = o }}>{cargo}</DetailModel></Suspense>
+        : simple}
     </group>
   )
 }

@@ -18,6 +18,7 @@ import { StatusChips } from './fx/StatusChips'
 import { YardLabels } from './fx/YardLabels'
 import { FlowLines, OverviewLabels, StoryMarker, VehicleBeacons } from './fx/Overview'
 import { SoundBridge } from '../audio/SoundBridge'
+import { DetailDirector, useDetail } from './detail'
 import { sound } from '../audio/sound'
 import { Merge } from './merge'
 import * as L from '../sim/layout'
@@ -63,7 +64,7 @@ function DevHandle() {
   const scene = useThree((s) => s.scene)
   const controls = useThree((s) => s.controls)
   useEffect(() => {
-    if (import.meta.env.DEV) Object.assign(window, { __gl: gl, __scene: scene, __store: useStore, __sim: sim, __controls: controls, __sound: sound })
+    if (import.meta.env.DEV) Object.assign(window, { __gl: gl, __scene: scene, __store: useStore, __sim: sim, __controls: controls, __sound: sound, __detail: useDetail })
   }, [gl, scene, controls])
   return null
 }
@@ -360,6 +361,7 @@ export function Scene() {
       <VehicleBeacons />
       <FlowLines />
       <SoundBridge />
+      <DetailDirector />
     </Canvas>
   )
 }

@@ -1,5 +1,5 @@
 // 거리의 사람들(인스턴스로 한 번에 그린다)과 오토바이·배송 로봇·드론
-import { useMemo, useRef } from 'react'
+import { Suspense, useEffect, useMemo, useRef } from 'react'
 import { useFrame, type ThreeEvent } from '@react-three/fiber'
 import * as THREE from 'three'
 import { sim } from '../../sim/sim'
@@ -12,6 +12,8 @@ import { lampMaterial, useEnvView } from '../env/state'
 import { useStore } from '../../store'
 import { pickHandlers } from './Vehicles'
 import { L } from '../../i18n'
+import { useDetail } from '../detail'
+import { HumanModel } from '../humans'
 
 const M4 = THREE.Matrix4
 const tmp = new M4()
@@ -106,7 +108,8 @@ function Crowd() {
     let umbN = 0
     const rain = useEnvView.getState().env.weather === 'rain'
     people.forEach((p, i) => {
-      const s = p.look.kid ? 0.66 : 1
+      // 실제 인체 모델로 그리는 작업자는 여기서 숨긴다(크기 0)
+      const s = drawnWorkers.has(p.id) ? 0 : p.look.kid ? 0.66 : 1
       q.setFromAxisAngle(up, p.heading)
       base.compose(vp.set(p.x, 0, p.z), q, vs.set(s, s, s))
       const swing = p.moving ? Math.sin(p.walkPhase) * 0.55 : 0
@@ -311,11 +314,51 @@ function DroneStation() {
   )
 }
 
+/** 실제 인체 모델이 화면에 올라온 작업자(불러오는 동안은 군중 그림으로 둔다) */
+const drawnWorkers = new Set<string>()
+
+/** 실제 인체 모델로 그리는 작업자 한 명(들고 가는 상자는 따로) */
+function WorkerHuman({ m }: { m: Mover }) {
+  const g = useRef<THREE.Group>(null)
+  const box = useRef<THREE.Mesh>(null)
+  useEffect(() => {
+    drawnWorkers.add(m.id)
+    return () => { drawnWorkers.delete(m.id) }
+  }, [m.id])
+  useFrame(() => {
+    if (!g.current) return
+    g.current.position.set(m.x, 0, m.z)
+    g.current.rotation.y = m.heading
+    if (box.current) box.current.visible = m.carry === 'box'
+  })
+  return (
+    <group ref={g} {...pickHandlers({ kind: 'mover', id: m.id })}>
+      <HumanModel asset="warehouse-worker" moving={() => m.moving} pace={Math.max(0.7, m.speed / 1.3)} />
+      <mesh ref={box} geometry={rboxGeo(0.42, 0.3, 0.34, 0.03, 1)} material={mat('#D6A76C')} position={[0, 1.02, 0.36]} castShadow visible={false} />
+    </group>
+  )
+}
+
+function DetailWorkers() {
+  const ids = useDetail((s) => s.people)
+  const list = useMemo(() => sim.life.movers.filter((m) => ids.has(m.id)), [ids])
+  return (
+    <>
+      {list.map((m) => (
+        <Suspense key={m.id} fallback={null}>
+          <WorkerHuman m={m} />
+        </Suspense>
+      ))}
+    </>
+  )
+}
+
 export function Life() {
   const movers = sim.life.movers
   return (
     <group>
       <Crowd />
+      <DetailWorkers />
       {movers.filter((m) => m.kind === 'moto').map((m) => <Moto key={m.id} m={m} />)}
       {movers.filter((m) => m.kind === 'robot').map((m) => <Robot key={m.id} m={m} />)}
       {movers.filter((m) => m.kind === 'drone').map((m) => <Drone key={m.id} m={m} />)}

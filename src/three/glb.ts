@@ -40,7 +40,7 @@ function grayTexture(tex: THREE.Texture) {
 }
 
 /** 물리 재질 → 표준 재질(유리는 반투명), tint면 회색조 텍스처·흰 바탕색 */
-function webMaterial(src: THREE.Material, tint: boolean): THREE.Material {
+export function webMaterial(src: THREE.Material, tint = false): THREE.Material {
   const p = src as THREE.MeshPhysicalMaterial
   if (!p.isMeshStandardMaterial) return src
   let m: THREE.MeshStandardMaterial = p
@@ -72,7 +72,7 @@ function webMaterial(src: THREE.Material, tint: boolean): THREE.Material {
  * 메시 하나를 모델 루트 좌표의 float 지오메트리로(위치·법선·UV만). meshopt 양자화(정수 정규화) 속성은
  * 노드 배율로 풀어야 하므로 먼저 float로 바꾼 뒤 행렬을 곱한다
  */
-function bake(geo: THREE.BufferGeometry, m: THREE.Matrix4) {
+export function bake(geo: THREE.BufferGeometry, m: THREE.Matrix4) {
   const out = new THREE.BufferGeometry()
   const n = geo.attributes.position.count
   for (const [name, size] of [['position', 3], ['normal', 3], ['uv', 2]] as const) {

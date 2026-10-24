@@ -1,4 +1,4 @@
-import { memo, useMemo, useRef } from 'react'
+import { Suspense, memo, useMemo, useRef } from 'react'
 import { useFrame, useThree, type ThreeEvent } from '@react-three/fiber'
 import type { CameraControlsImpl } from '@react-three/drei'
 import * as THREE from 'three'
@@ -10,6 +10,9 @@ import { PalletModel, Person, RollCage } from '../models/equipment'
 import { loadTex } from '../textures'
 import { unitBox } from '../kit'
 import { Merge } from '../merge'
+import { CARRIERS } from '../../sim/data'
+import { DetailModel, useDetail } from '../detail'
+import { HumanModel } from '../humans'
 
 export function pickHandlers(sel: Selection) {
   return {
@@ -55,6 +58,18 @@ const MemoReefer = memo(ReeferModel)
 const MemoTractor = memo(TractorModel)
 const MemoChassis = memo(ChassisModel)
 
+/** 손수레를 끄는 배송기사(코드 모델) */
+const MemoWalker = memo(function Walker() {
+  return (
+    <Merge>
+      <Person vest="#2F55E6" cap />
+      <group position={[0, 0, 0.75]}>
+        <HandCart boxes={3} />
+      </group>
+    </Merge>
+  )
+})
+
 function VehicleEntity({ v }: { v: Vehicle }) {
   const group = useRef<THREE.Group>(null)
   const parts = useMemo(makeParts, [])
@@ -70,6 +85,10 @@ function VehicleEntity({ v }: { v: Vehicle }) {
   const looks = useMemo(() => v.cargo.map((id) => (id ? sim.pallets.get(id)?.look ?? 'boxes' : 'boxes')), [trip, v])
   const handlers = useMemo(() => pickHandlers({ kind: 'vehicle', id: v.id }), [v.id])
   const controls = useThree((s) => s.controls) as unknown as CameraControlsImpl | null
+  // 가까이 보는 몇 대만 상세 모델(GLB). 불러오는 동안은 지금 모델
+  const detail = useDetail((s) => s.vehicles.has(v.id))
+  const courier = useDetail((s) => s.couriers.has(v.id))
+  const paint = CARRIERS[v.carrier]?.color
 
   useFrame(() => {
     const g = group.current
@@ -128,11 +147,15 @@ function VehicleEntity({ v }: { v: Vehicle }) {
   return (
     <>
     <group ref={group} {...handlers}>
-      {v.kind === 'reefer' && <Merge><MemoReefer parts={parts} /></Merge>}
+      {v.kind === 'reefer' && (detail
+        ? <Suspense fallback={<Merge><MemoReefer parts={parts} /></Merge>}><DetailModel asset="reefer-truck" parts={parts} /></Suspense>
+        : <Merge><MemoReefer parts={parts} /></Merge>)}
       {v.kind === 'trailer' && <Merge><MemoTractor carrier={v.carrier} parts={parts} /></Merge>}
       {v.kind === 'wing' && (
         <>
-          <Merge><MemoWing carrier={v.carrier} parts={parts} /></Merge>
+          {detail
+            ? <Suspense fallback={<Merge><MemoWing carrier={v.carrier} parts={parts} /></Merge>}><DetailModel asset="wing-truck" parts={parts} paint={paint} /></Suspense>
+            : <Merge><MemoWing carrier={v.carrier} parts={parts} /></Merge>}
           {L.WING_SLOTS.map((s, i) => (
             <group
               key={`${trip}-${i}`}
@@ -159,7 +182,9 @@ function VehicleEntity({ v }: { v: Vehicle }) {
       )}
       {v.kind === 'van' && (
         <>
-          <Merge><MemoVan carrier={v.carrier} parts={parts} /></Merge>
+          {detail
+            ? <Suspense fallback={<Merge><MemoVan carrier={v.carrier} parts={parts} /></Merge>}><DetailModel asset="delivery-truck" parts={parts} paint={paint} /></Suspense>
+            : <Merge><MemoVan carrier={v.carrier} parts={parts} /></Merge>}
           <mesh ref={inner} geometry={unitBox} position={[0, 1.4, -1.6]} scale={[1.7, 1, 1.4]}>
             <meshStandardMaterial map={loadTex('parcel')} roughness={0.8} />
           </mesh>
@@ -176,12 +201,12 @@ function VehicleEntity({ v }: { v: Vehicle }) {
     )}
     {v.kind === 'van' && v.home === 'IN' && (
       <group ref={walker} visible={false}>
-        <Merge>
-          <Person vest="#2F55E6" cap />
-          <group position={[0, 0, 0.75]}>
-            <HandCart boxes={3} />
-          </group>
-        </Merge>
+        {courier ? (
+          // 가까이 보면 택배 상자를 든 배송기사 모델(GLB)
+          <Suspense fallback={<MemoWalker />}>
+            <HumanModel asset="delivery-courier" moving={() => v.walk.stage !== 'door'} pace={1.25} />
+          </Suspense>
+        ) : <MemoWalker />}
       </group>
     )}
     {v.kind === 'van' && v.home === 'IN' && (
