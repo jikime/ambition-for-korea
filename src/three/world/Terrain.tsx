@@ -12,6 +12,7 @@ import { GJ_RAIL, RAIL } from '../../sim/rail'
 import { AtlasSign, signId } from '../townAtlas'
 import { Trees } from './Vegetation'
 import { RIVER, RIVER_W } from './plan'
+import { WHARF } from '../../sim/river'
 
 /** 산이 시작하는 안쪽 사각형(이 안은 평지) */
 const C = { x0: -1190, x1: 1190, z0: -470, z1: 450 }
@@ -212,7 +213,11 @@ export function River() {
       const nz = (q.x - p.x) / l
       for (const s of [-1, 1]) {
         const o = RIVER_W / 2 + 9 + (hash(i, s) - 0.5) * 4
-        out.push([p.x + nx * o * s, p.z + nz * o * s, 0.9 + hash(s, i) * 0.4])
+        const x = p.x + nx * o * s
+        const z = p.z + nz * o * s
+        // 대전 강변 부두(정박지 · 야적장)에는 심지 않는다
+        if (x > WHARF.apron.x0 - 4 && x < WHARF.basin.x1 && z > WHARF.basin.z0 - 4 && z < WHARF.basin.z1 + 4) continue
+        out.push([x, z, 0.9 + hash(s, i) * 0.4])
       }
     }
     return out

@@ -5,6 +5,7 @@
 import { sim } from '../sim/sim'
 import { CARS, RAIL, TRAIN_LEN, carPose, type RailState } from '../sim/rail'
 import { DESK, HUB } from '../sim/hub'
+import { BARGE, type BargeState } from '../sim/barge'
 import { useStore } from '../store'
 import { useEnvView } from '../three/env/state'
 import { STORY_STEPS } from '../ui/format'
@@ -24,6 +25,7 @@ const near = (x: number, z: number, e: Ear, r: number) => (x - e.x) ** 2 + (z - 
 export class SoundDirector {
   private primed = false
   private rail: RailState = 'BS'
+  private barge: BargeState = 'moored'
   private rmg = { BS: 0, GJ: 0 }
   private desk = 'idle'
   private phase = new Map<string, string>()
@@ -37,6 +39,7 @@ export class SoundDirector {
   private prime() {
     const R = sim.rail
     this.rail = R.state
+    this.barge = sim.barge.state
     this.rmg = { BS: R.bs.work.done, GJ: R.gj.work.done }
     this.desk = sim.hub.desk.mode
     for (const v of sim.vehicles) this.phase.set(v.id, v.phase)
@@ -57,10 +60,24 @@ export class SoundDirector {
     const st = useStore.getState()
     const onSite = st.view === 'site'
     this.railSounds(ear)
+    this.bargeSounds(ear)
     this.hubSounds(ear, onSite)
     this.vehicles(ear, onSite, st.site)
     this.alerts(st.site)
     this.ambience(ear, onSite, st.site)
+  }
+
+  // ───────── 내륙 화물선: 출항·입항 기적 · 엔진 · 접안 중 선체에 부딪는 물결
+  private bargeSounds(ear: Ear) {
+    const b = sim.barge
+    const pos: Vec3 = [b.x, 3, b.z]
+    if (b.state !== this.barge) {
+      if (b.state === 'unberth' || b.state === 'turn') sound.at('barge-horn', pos, { volume: 0.85, ref: 70 })
+      this.barge = b.state
+    }
+    const busy = b.visible && b.state !== 'moored'
+    sound.loop('barge-engine', 'barge-engine-loop', busy && near(b.x, b.z, ear, 500), pos, 0.3 + 0.4 * Math.min(1, b.v / BARGE.vmax), 30)
+    sound.loop('barge-water', 'water-hull-loop', b.visible && near(b.x, b.z, ear, 250), pos, 0.35, 18)
   }
 
   // ───────── 철송: 출발 경적 · 달리는 소리 · 도착 제동 · 정차 공회전 · RMG 컨테이너 잠금

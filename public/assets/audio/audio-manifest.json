@@ -431,6 +431,36 @@
    "duration": 12,
    "file": "warehouse-room-loop.ogg",
    "fallback": "warehouse-room-loop.mp3"
+  },
+  {
+   "id": "barge-engine-loop",
+   "type": "sfx",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 12,
+   "file": "barge-engine-loop.ogg",
+   "fallback": "barge-engine-loop.mp3"
+  },
+  {
+   "id": "barge-horn",
+   "type": "sfx",
+   "loop": false,
+   "language": null,
+   "transcript": null,
+   "duration": 4.2,
+   "file": "barge-horn.ogg",
+   "fallback": "barge-horn.mp3"
+  },
+  {
+   "id": "water-hull-loop",
+   "type": "ambience",
+   "loop": true,
+   "language": null,
+   "transcript": null,
+   "duration": 12,
+   "file": "water-hull-loop.ogg",
+   "fallback": "water-hull-loop.mp3"
   }
  ]
 }

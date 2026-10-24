@@ -6,6 +6,7 @@ import { Bell, ChevronDown, ChevronRight, History, Search, Layers, Loader2, Spar
 import { sound } from '../audio/sound'
 import { runCommand, type CommandResult } from '../ai/command'
 import { sim } from '../sim/sim'
+import { BARGE_STATE } from '../sim/barge'
 import { ITEMS, MANAGER } from '../sim/data'
 import { SITE_META, SITE_ORDER } from '../sim/world'
 import { useStore, type Selection } from '../store'
@@ -47,6 +48,7 @@ function searchAll(q: string): Hit[] {
   for (const d of [...sim.bays, ...sim.docks, ...sim.slots, ...sim.icBays, ...sim.icReefers, ...sim.inDocks, ...sim.inSlots]) if (has(d.id, ...LL(['도크', '하차', '출고', '슬롯'], ['dock', 'unloading', 'outbound', 'slot']))) hits.push({ sel: { kind: 'dock', id: d.id }, title: d.id, sub: d.vehicle ? L(`${d.vehicle} 사용 중`, `In use · ${d.vehicle}`) : L('사용 가능', 'Available'), group: L('도크', 'Dock') })
   for (const c of sim.chargers) if (has(c.id, ...LL(['충전'], ['charger', 'charging']))) hits.push({ sel: { kind: 'charger', id: c.id }, title: L(`충전기 ${c.id}`, `Charger ${c.id}`), sub: c.forklift ? L(`${c.forklift} 충전 중`, `Charging ${c.forklift}`) : L('사용 가능', 'Available'), group: L('충전기', 'Charger') })
   for (const a of sim.airport.aircraft) if (has(a.flight, ...LL(['화물기', '비행기', '항공', '공항'], ['freighter', 'plane', 'air', 'airport']), a.type)) hits.push({ sel: { kind: 'aircraft', id: a.id }, title: a.flight, sub: `${a.airline === 'daon' ? L('다온항공', 'Daon Air') : L('한빛카고', 'Hanbit Cargo')} ${a.type} · ${a.route}`, group: L('화물기', 'Freighter') })
+  if (has(sim.barge.id, sim.barge.name, ...LL(['화물선', '바지선', '배', '선박', '강', '부두'], ['barge', 'ship', 'vessel', 'river', 'wharf']))) hits.push({ sel: { kind: 'barge', id: sim.barge.id }, title: sim.barge.name, sub: L(`내륙 화물선 · ${BARGE_STATE[sim.barge.state]}`, `Inland barge · ${BARGE_STATE[sim.barge.state]}`), group: L('화물선', 'Barge') })
   if (has(...LL(['분류', '소터', 'X1', '크로스벨트', '리젝트', '허브'], ['sort', 'sorter', 'X1', 'cross-belt', 'reject', 'hub']))) hits.push({ sel: { kind: 'sorter', id: 'X1' }, title: L('크로스벨트 소터 X1', 'Cross-belt sorter X1'), sub: L('곤지암 허브 분류동 · 리젝트 데스크', 'Gonjiam Hub sort hall · Reject desk'), group: L('설비', 'Equip.') })
   if (has(...LL(['분류', '소터', 'S1', '컨베이어'], ['sort', 'sorter', 'S1', 'conveyor']))) hits.push({ sel: { kind: 'sorter', id: 'S1' }, title: L('분류 라인 S1', 'Sorting line S1'), sub: L('곤지암 배송 분류장', 'Gonjiam delivery sort area'), group: L('설비', 'Equip.') })
   if (has(...LL(['분류', '소터', 'S2', '휠소터', '인천'], ['sort', 'sorter', 'S2', 'wheel sorter', 'incheon']))) hits.push({ sel: { kind: 'sorter', id: 'S2' }, title: L('인천 휠소터 S2', 'Incheon wheel sorter S2'), sub: L('서브터미널 분류', 'Sub-terminal sorting'), group: L('설비', 'Equip.') })

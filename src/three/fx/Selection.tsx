@@ -29,6 +29,7 @@ function dims(sel: Sel): [number, number, number] {
   if (sel.kind === 'crane') return sel.id.startsWith('agv') ? [3.4, 4.4, 13.6] : sel.id.startsWith('armg') ? [20, 23, 14] : [18, 40, 17]
   if (sel.kind === 'story') return [1.6, 1.6, 1.6]
   if (sel.kind === 'aircraft') return [58, 20, 60]
+  if (sel.kind === 'barge') return [10.2, 9, 47]
   if (sel.kind === 'mover') {
     const m = sim.life.movers.find((x) => x.id === sel.id)
     return m?.kind === 'drone' ? [1.6, 0.8, 1.6] : m?.kind === 'moto' ? [1.0, 1.9, 2.2] : m?.kind === 'robot' ? [0.9, 1.1, 1.2] : [0.9, 1.9, 0.9]
@@ -42,6 +43,7 @@ function heading(sel: Sel) {
   if (sel.kind === 'vehicle') return sim.vehicle(sel.id)?.heading ?? 0
   if (sel.kind === 'forklift') return sim.forklift(sel.id)?.heading ?? 0
   if (sel.kind === 'aircraft') return sim.airport.aircraft.find((a) => a.id === sel.id)?.heading ?? 0
+  if (sel.kind === 'barge') return sim.barge.heading
   if (sel.kind === 'mover') return sim.life.movers.find((m) => m.id === sel.id)?.heading ?? 0
   if (sel.kind === 'robot') return sim.robots.find((r) => r.id === sel.id)?.heading ?? 0
   if (sel.kind === 'equip') return sim.djwh.equipById(sel.id)?.heading ?? 0

@@ -4,7 +4,7 @@ import type { EnvSettings } from './sim/env'
 
 export type TrackMode = 'story' | 'sea' | 'air' | 'ret' | 'vehicle' | 'dock' | 'gate'
 
-export type SelKind = 'site' | 'vehicle' | 'forklift' | 'pallet' | 'charger' | 'dock' | 'sorter' | 'crane' | 'story' | 'aircraft' | 'mover' | 'robot' | 'equip'
+export type SelKind = 'site' | 'vehicle' | 'forklift' | 'pallet' | 'charger' | 'dock' | 'sorter' | 'crane' | 'story' | 'aircraft' | 'mover' | 'robot' | 'equip' | 'barge'
 export interface Selection {
   kind: SelKind
   id: string
@@ -110,7 +110,7 @@ export const useStore = create<State>((set, get) => ({
   center: null,
   openCenter: (t) => set({ center: t }),
   select: (s, site) => {
-    const patch: Partial<State> = { selected: s, follow: !!s && (s.kind === 'vehicle' || s.kind === 'forklift' || s.kind === 'story' || s.kind === 'aircraft' || s.kind === 'mover' || s.kind === 'robot' || s.kind === 'equip'), view: 'site' }
+    const patch: Partial<State> = { selected: s, follow: !!s && (s.kind === 'vehicle' || s.kind === 'forklift' || s.kind === 'story' || s.kind === 'aircraft' || s.kind === 'mover' || s.kind === 'robot' || s.kind === 'equip' || s.kind === 'barge'), view: 'site' }
     if (s?.kind === 'vehicle') {
       patch.tracked = s.id
       patch.trackMode = 'vehicle'

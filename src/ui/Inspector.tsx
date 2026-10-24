@@ -23,6 +23,7 @@ import { CAUSE_LABEL } from '../sim/promise'
 import { ROUTE_KM } from '../sim/carbon'
 import { VCAUSE_LABEL, type VesselCause } from '../sim/vessel'
 import { RAIL_STATE_LABEL, STOP, type TermId } from '../sim/rail'
+import { BARGE, BARGE_STATE } from '../sim/barge'
 import { L, LL, plural } from '../i18n'
 
 function Header({ glyph, kicker, kickerColor, title, sub, sel, followable }: {
@@ -940,6 +941,29 @@ function ChargerView({ id }: { id: string }) {
   )
 }
 
+function BargeView() {
+  const b = sim.barge
+  const moving = b.state === 'down' || b.state === 'up'
+  const tone = b.state === 'moored' ? 'green' : b.state === 'away' ? 'gray' : 'blue'
+  const next = b.state === 'up' || b.state === 'away' ? L('상류 내륙 부두', 'Upstream inland wharf') : L('대전 강변 부두', 'Daejeon River Wharf')
+  const done = Math.floor(b.work * BARGE.boxes * 2)
+  return (
+    <>
+      <Header glyph={<Glyph kind="barge" />} kicker={L('내륙 화물선 · 대전 강변 부두', 'Inland barge · Daejeon River Wharf')} title={b.name} sub={L(`${b.id} · 40ft 컨테이너 ${BARGE.boxes}개(${BARGE.teu}TEU)`, `${b.id} · ${BARGE.boxes} × 40ft containers (${BARGE.teu} TEU)`)} sel={{ kind: 'barge', id: b.id }} followable={b.visible} />
+      <StatusLine tone={tone} label={BARGE_STATE[b.state]} text={b.state === 'moored' ? L(`하역 ${Math.min(done, BARGE.boxes)}/${BARGE.boxes} · 선적 ${Math.max(0, done - BARGE.boxes)}/${BARGE.boxes}`, `Unloaded ${Math.min(done, BARGE.boxes)}/${BARGE.boxes} · loaded ${Math.max(0, done - BARGE.boxes)}/${BARGE.boxes}`) : L(`${next} 도착 약 ${Math.max(1, Math.round(b.eta / 60))}분`, `${next} in about ${Math.max(1, Math.round(b.eta / 60))} min`)} />
+      {b.state === 'moored' && <Bar value={b.work} tone="green" className="mt-2.5" />}
+      <div className="mt-2 divide-y divide-line-2">
+        <Row label={L('속도', 'Speed')}>{moving ? `${(b.v * 3.6).toFixed(1)} km/h` : '-'}</Row>
+        <Row label={L('다음 기항', 'Next call')}>{next}</Row>
+        <Row label={L('항로', 'Route')}>{L('상류 내륙 부두 ↔ 대전 강변 부두 · 약 1.5km', 'Inland wharf ↔ Daejeon River Wharf · ~1.5 km')}</Row>
+        <Row label={L('오늘 운항', 'Trips today')}>{L(`${b.trips}회`, `${b.trips}`)}</Row>
+        <Row label={L('오늘 처리', 'Handled today')}>{L(`컨테이너 ${b.handled}개`, `${b.handled} containers`)}</Row>
+        <Row label={L('제원', 'Vessel')}>{L(`길이 ${BARGE.len}m · 폭 ${BARGE.beam}m`, `${BARGE.len} m long · ${BARGE.beam} m beam`)}</Row>
+      </div>
+    </>
+  )
+}
+
 function DockView({ id }: { id: string }) {
   const d = dockInfo(id)!
   const v = d.vehicle
@@ -1373,6 +1397,7 @@ export function Inspector() {
   else if (sel?.kind === 'mover') body = <PersonView id={sel.id} />
   else if (sel?.kind === 'robot') body = <RobotView id={sel.id} />
   else if (sel?.kind === 'equip') body = <DjEquipView id={sel.id} />
+  else if (sel?.kind === 'barge') body = <BargeView />
   else if (sel?.kind === 'story') body = sel.id === 'sea' || sel.id === 'air' ? <JourneyView mode={sel.id} /> : sel.id === 'ret' ? <ReturnView /> : <StoryView />
   else if (sel?.kind === 'site') body = <SiteView id={sel.id as SiteId} />
   return (

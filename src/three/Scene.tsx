@@ -26,6 +26,7 @@ import * as L from '../sim/layout'
 import { L as tr } from '../i18n'
 import { GonjiamExtras, HighwayProps, IncheonStatic, PortStatic, RailYardStatic, TownStatic } from './world/Network'
 import { RailYard } from './entities/Rail'
+import { BargeEntity, RiverWharf } from './entities/Barge'
 import { FacilityLabels } from './fx/FacilityLabels'
 import { TankFarm, TollPlazas } from './world/Outskirts'
 import { GonjiamRailStatic, RailLineStatic } from './world/RailLine'
@@ -48,7 +49,7 @@ import { look } from './env/state'
 
 const AZ = 0.62
 const POL = 0.9
-const FOCUS_DIST: Record<SelKind, number> = { site: 170, vehicle: 62, forklift: 44, pallet: 38, charger: 36, dock: 56, sorter: 78, crane: 120, story: 58, aircraft: 150, mover: 34, robot: 30, equip: 40 }
+const FOCUS_DIST: Record<SelKind, number> = { site: 170, vehicle: 62, forklift: 44, pallet: 38, charger: 36, dock: 56, sorter: 78, crane: 120, story: 58, aircraft: 150, mover: 34, robot: 30, equip: 40, barge: 110 }
 
 function siteView(id: SiteId) {
   const m = SITE_META[id] ?? SITE_META.GJ
@@ -304,6 +305,8 @@ export function World() {
       <Port />
       <RailYardStatic />
       <RailYard />
+      <RiverWharf />
+      <BargeEntity />
       <RailLineStatic />
       <GonjiamRailStatic />
       <TankFarm />

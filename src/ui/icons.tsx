@@ -145,7 +145,7 @@ export function ItemIcon({ item, size = 22 }: { item: ItemKey; size?: number }) 
 }
 
 /** 정보 패널 머리의 대상 그림 */
-export type GlyphKind = 'site' | 'wing' | 'box' | 'van' | 'forklift' | 'pallet' | 'charger' | 'dock' | 'sorter' | 'reefer' | 'trailer' | 'crane' | 'story' | 'locker'
+export type GlyphKind = 'site' | 'wing' | 'box' | 'van' | 'forklift' | 'pallet' | 'charger' | 'dock' | 'sorter' | 'reefer' | 'trailer' | 'crane' | 'story' | 'locker' | 'barge'
 
 export function Glyph({ kind, color = '#2F55E6', size = 40 }: { kind: GlyphKind; color?: string; size?: number }) {
   const g = (() => {
@@ -183,6 +183,19 @@ export function Glyph({ kind, color = '#2F55E6', size = 40 }: { kind: GlyphKind;
             <circle cx="7" cy="28" r="2.6" fill="#2A2E39" />
             <circle cx="13" cy="28" r="2.6" fill="#2A2E39" />
             <circle cx="33" cy="28" r="2.6" fill="#2A2E39" />
+          </>
+        )
+      case 'barge':
+        return (
+          <>
+            <path d="M3 24h34l-4 7H8z" fill="#2E4A55" />
+            <rect x="7" y="17" width="8" height="7" fill="#2F7D6D" />
+            <rect x="15.5" y="17" width="8" height="7" fill="#C2693F" />
+            <rect x="7" y="13" width="8" height="4" fill="#6C7C8F" />
+            <rect x="15.5" y="13" width="8" height="4" fill={color} />
+            <rect x="27" y="12" width="7" height="12" fill="#F4F6FB" stroke="#CBD3E6" />
+            <rect x="28.5" y="14" width="4" height="2.4" fill="#2B3654" />
+            <path d="M2 34c3-2 5-2 8 0s5 2 8 0 5-2 8 0 5 2 8 0 4-2 4 0" stroke="#9DB8EE" strokeWidth="1.6" fill="none" />
           </>
         )
       case 'crane':

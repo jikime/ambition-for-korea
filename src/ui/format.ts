@@ -1,6 +1,7 @@
 import { AMR_STATE, idleTask, personInfo, siteAt } from './people'
 import { sim, SPEEDUP, type Forklift, type Pallet, type Vehicle } from '../sim/sim'
 import type { Aircraft } from '../sim/airport'
+import { BARGE_STATE } from '../sim/barge'
 import { CARRIERS, ITEMS } from '../sim/data'
 import { SITE_META, type SiteId } from '../sim/world'
 import { STOPS } from '../sim/sites'
@@ -168,6 +169,7 @@ export function siteOf(sel: Selection): SiteId | undefined {
   if (sel.kind === 'charger') return sim.chargers.find((c) => c.id === sel.id)?.site
   if (sel.kind === 'crane') return 'BS'
   if (sel.kind === 'aircraft') return 'AP'
+  if (sel.kind === 'barge') return 'DJ'
   if (sel.kind === 'sorter') return sel.id === 'S2' ? 'IN' : 'GJ'
   if (sel.kind === 'story') return sim.journeyPos(sel.id).site
   if (sel.kind === 'dock') return dockInfo(sel.id)?.site
@@ -213,6 +215,7 @@ export function entityLabel(sel: Selection): { title: string; status?: string; t
     const a = sim.airport.aircraft.find((x) => x.id === sel.id)
     return { title: a?.flight ?? sel.id, status: a ? aircraftState(a) : '', tone: 'blue' }
   }
+  if (sel.kind === 'barge') return { title: sim.barge.name, status: BARGE_STATE[sim.barge.state], tone: sim.barge.state === 'moored' ? 'green' : 'blue' }
   if (sel.kind === 'mover') {
     const m = sim.life.movers.find((x) => x.id === sel.id)
     if (!m) return { title: sel.id, tone: 'gray' }

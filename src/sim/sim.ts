@@ -36,6 +36,7 @@ import { Schedule } from './schedule'
 import { GateLog } from './gatelog'
 import { History } from './history'
 import { RailShuttle } from './rail'
+import { Barge } from './barge'
 import { TownLife } from './town'
 import { DjWarehouse } from './djwh'
 import { SPEEDUP } from './clock'
@@ -521,6 +522,8 @@ export class Sim {
   history = new History(this)
   /** 부산신항 철송장 셔틀 열차(독립, 전역 난수 안 씀) */
   rail = new RailShuttle()
+  /** 강 내륙 화물선(대전 강변 부두 ↔ 상류 내륙 부두) */
+  barge = new Barge()
   teuBase = 1284
   get teu() {
     return this.teuBase + (this.port.stats.discharged + this.port.stats.loaded) * 2
@@ -2491,6 +2494,7 @@ export class Sim {
     this.schedule.step(dt)
     this.gateLog.step(dt)
     this.rail.step(dt)
+    this.barge.step(dt)
     this.history.step(dt)
     this.carbon.step()
     this.solar.step()
@@ -3363,6 +3367,7 @@ export class Sim {
       const a = this.airport.aircraft.find((x) => x.id === id)
       return a ? { x: a.x, y: a.y + 6, z: a.z } : null
     }
+    if (kind === 'barge') return this.barge.visible ? { x: this.barge.x, y: 4, z: this.barge.z } : null
     if (kind === 'crane') {
       const [type, n] = id.split('-')
       const i = Number(n)

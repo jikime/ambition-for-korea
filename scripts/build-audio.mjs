@@ -1,9 +1,9 @@
 // 오디오 에셋 만들기: hubtrace 에셋 팩(WAV 48kHz)에서 화면에 쓰는 소리만 골라 웹용으로 줄인다.
-//  - <id>.ogg(Opus, 반복음도 이음새 없이) + <id>.mp3(Opus를 못 읽는 브라우저용) → public/assets/audio/
+//  - <id>.ogg(Opus, 반복음도 이음새 없이) + <id>.mp3(Opus를 못 읽는 브라우저용) → public/assets/audio/ (이미 있으면 건너뛴다)
 //  - audio-manifest.json: 쓰는 소리의 id · 종류 · 반복 여부 · 언어 · 문구 · 길이
 // 사용: node scripts/build-audio.mjs [에셋 팩 폴더(기본 hubtrace-assets-v2)]  — ffmpeg 필요
 import { execFileSync } from 'node:child_process'
-import { mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs'
 import { join, resolve } from 'node:path'
 
 const PACK = resolve(process.argv[2] ?? 'hubtrace-assets-v2')
@@ -20,6 +20,8 @@ const IDS = [
   'radio-ptt-in', 'radio-ptt-out', 'ui-confirm', 'ui-warning', 'ui-dispatch',
   // 환경음
   'light-rain-loop', 'light-wind-loop', 'yard-distant-traffic-loop', 'warehouse-room-loop',
+  // 내륙 화물선
+  'barge-engine-loop', 'barge-horn', 'water-hull-loop',
 ]
 
 const src = JSON.parse(readFileSync(join(PACK, 'audio-manifest.json'), 'utf8'))
@@ -35,8 +37,9 @@ for (const id of IDS) {
   const input = join(PACK, a.file)
   // 음성은 낮은 비트레이트로도 충분하고, 반복 환경음은 스테레오 폭을 남긴다
   const opus = a.type === 'voice' ? '32k' : a.loop ? '64k' : '48k'
-  ff(['-i', input, '-c:a', 'libopus', '-b:a', opus, join(OUT, `${id}.ogg`)])
-  ff(['-i', input, '-c:a', 'libmp3lame', '-q:a', a.type === 'voice' ? '7' : '5', join(OUT, `${id}.mp3`)])
+  // 이미 만든 파일은 다시 인코딩하지 않는다(새로 추가한 소리만)
+  if (!existsSync(join(OUT, `${id}.ogg`))) ff(['-i', input, '-c:a', 'libopus', '-b:a', opus, join(OUT, `${id}.ogg`)])
+  if (!existsSync(join(OUT, `${id}.mp3`))) ff(['-i', input, '-c:a', 'libmp3lame', '-q:a', a.type === 'voice' ? '7' : '5', join(OUT, `${id}.mp3`)])
   bytes += statSync(join(OUT, `${id}.ogg`)).size + statSync(join(OUT, `${id}.mp3`)).size
   out.push({ id, type: a.type, loop: !!a.loop, language: a.language ?? null, transcript: a.transcript ?? null, duration: a.duration, file: `${id}.ogg`, fallback: `${id}.mp3` })
 }
